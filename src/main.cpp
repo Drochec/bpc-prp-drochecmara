@@ -3,6 +3,7 @@
 #include "RosExampleClass.h"
 #include  "helper.hpp"
 #include "nodes/io_node.hpp"
+#include "nodes/motor.hpp"
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
@@ -14,6 +15,7 @@ int main(int argc, char* argv[]) {
     //auto node2 = std::make_shared<rclcpp::Node>("node2");
     //auto sin_node = std::make_shared<rclcpp::Node>("sin_node");
     auto io_node = std::make_shared<nodes::IoNode>();
+    auto motor_node = std::make_shared<nodes::Motor_Node>();
     // Regular uptime publishers
     //auto example_class1 = std::make_shared<RosExampleClass>(node1, "topic1", 1.0);
     //auto example_class2 = std::make_shared<RosExampleClass>(node2, "topic2", 2.0);
@@ -26,6 +28,7 @@ int main(int argc, char* argv[]) {
     //executor->add_node(node2);
     //executor->add_node(sin_node);
     executor->add_node(io_node);
+    executor->add_node(motor_node);
 
     executor->spin();
 
