@@ -35,7 +35,7 @@ namespace nodes {
         }
 
         publisher_->publish(msg);
-        RCLCPP_INFO(this->get_logger(), "Sending LED data");
+        //RCLCPP_INFO(this->get_logger(), "Sending LED data");
     }
 
 

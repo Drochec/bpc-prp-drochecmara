@@ -11,8 +11,8 @@ namespace algorithms {
     };
 
     struct Encoders{
-        int l; //left
-        int r; //right
+        u_int16_t l; //left
+        u_int16_t r; //right
     };
     struct Coordinates{ //Cartesian coordinates
         float x;
