@@ -9,7 +9,7 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <helper.hpp>
 
-#include "kinematics.hpp"
+#include "algorithms/kinematics.hpp"
 
 using namespace std::chrono_literals;
 

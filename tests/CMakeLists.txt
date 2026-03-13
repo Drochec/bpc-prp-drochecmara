@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
-include_directories(../include)
+include_directories(
+    ../include
+    ../include/algorithms
+    ../include/nodes
+    )
 
 find_package(GTest REQUIRED)
 enable_testing()

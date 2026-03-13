@@ -1,11 +1,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include <cmath>
 #include "RosExampleClass.h"
-#include  "helper.hpp"
+#include "helper.hpp"
 #include "nodes/line.hpp"
 #include "nodes/io_node.hpp"
 #include "nodes/motor.hpp"
-
+#include "algorithms/kinematics.hpp"
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);

@@ -4,6 +4,8 @@
 #include <string>
 #include <chrono>
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/u_int8_multi_array.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 
 namespace loops {
     class BangBang : public rclcpp::Node {

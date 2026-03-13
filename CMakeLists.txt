@@ -21,6 +21,7 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/nodes/motor.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/line.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
+        ${CMAKE_SOURCE_DIR}/src/algorithms/kinematics.cpp
 )
 
 set(AMENT_LIBS rclcpp std_msgs sensor_msgs cv_bridge image_transport)
@@ -29,6 +30,7 @@ add_executable(${PROJECT_NAME} src/main.cpp ${SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC
         include
         include/nodes
+        include/algorithms
         ${OpenCV_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         /opt/ros/humble/include

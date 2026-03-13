@@ -1,6 +1,6 @@
 #include "kinematics.hpp"
 
-#include <math.h>
+#include <cmath>
 
 namespace algorithms {
     RobotSpeed Kinematics::forward(WheelSpeed wheel_speed) const {

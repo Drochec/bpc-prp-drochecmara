@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 namespace algorithms {
     struct RobotSpeed{
         float v; //linear
@@ -11,8 +13,8 @@ namespace algorithms {
     };
 
     struct Encoders{
-        u_int16_t l; //left
-        u_int16_t r; //right
+        uint16_t l; //left
+        uint16_t r; //right
     };
     struct Coordinates{ //Cartesian coordinates
         float x;
