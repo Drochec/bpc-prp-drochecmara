@@ -13,8 +13,8 @@ namespace algorithms {
     };
 
     struct Encoders{
-        uint16_t l; //left
-        uint16_t r; //right
+        uint32_t l; //left
+        uint32_t r; //right
     };
     struct Coordinates{ //Cartesian coordinates
         float x;
@@ -22,14 +22,19 @@ namespace algorithms {
         float fi;
     };
 
+    //TODO: Zmenit chovani Kinematics, tak aby vsechny tridy byli static
+    //      Prenechat tak hodnoty tak ukladani hodnot prislusnym nodam
     class Kinematics{
-        double wheel_radius_; //mm
-        double wheel_base_; //mm
+        double wheel_radius_; //m
+        double wheel_base_; //m
         int TPR_; //TPR
 
         Coordinates pose_; //x,y
         Encoders encoders_; //ticks_r,ticks_l
-
+        WheelSpeed wheel_speed_; //w_l [rad/s], w_r [rad/s]
+        RobotSpeed robot_speed_; //v [m/s], w [rad/s]
+        
+    public:
         Kinematics(double wheel_radius, double wheel_base, int ticks_revolution) : wheel_radius_(wheel_radius), wheel_base_(wheel_base), TPR_(ticks_revolution) {} ;
         RobotSpeed forward(WheelSpeed x) const;
         WheelSpeed inverse(RobotSpeed x) const;

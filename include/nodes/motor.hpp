@@ -16,6 +16,10 @@ using namespace std::chrono_literals;
 namespace nodes {
 
     float constexpr max_speed = 19.5f; //rad/s
+    double constexpr wheel_radius = 68.55e-3; //m
+    double constexpr wheel_base = 0e-3; //m
+    int constexpr TPR = 585; //Ticks per revolution
+
     class MotorNode : public rclcpp::Node {
     private:
         // Subscriber
@@ -26,11 +30,13 @@ namespace nodes {
         rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
         rclcpp::TimerBase::SharedPtr timer_;
 
-        algorithms::WheelSpeed wheel_speed_;
-        algorithms::Encoders encoders_;
+        algorithms::Kinematics kinematics_; //Treba instace jelikoz Kinematics funkce nejsou static - mozna predelat?
+        algorithms::RobotSpeed cmd_vel_; //Nastavena rychlost
+        algorithms::Encoders encoders_; //Prectene hodnoty enkoderu
+
     public:
         // Constructor
-        MotorNode() : rclcpp::Node("Motor_node"), wheel_speed_({0,0}), encoders_({0,0})
+        MotorNode() : rclcpp::Node("Motor_node"), kinematics_(wheel_radius,wheel_base,TPR)
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds, 10);
 
