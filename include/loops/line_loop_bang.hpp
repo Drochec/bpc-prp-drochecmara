@@ -6,16 +6,44 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 
+using namespace std::chrono_literals;
 namespace loops {
     class BangBang : public rclcpp::Node {
 
-        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_;
-        rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_est_discrete_;
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_line_est_;
+        rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
         rclcpp::TimerBase::SharedPtr timer_;
 
-        BangBang() : Node("bang_bang") {
+        BangBang() : rclcpp::Node("bang_bang") {
+            
+            subscriber_line_est_ = create_subscription<std_msgs::msg::Float32>(
+                Topic::line_estimate,
+                10,
+                std::bind(&BangBang::line_est_continuous_callback));
+            
+            subscriber_line_est_discrete_ = create_subscription<std_msgs::msg::UInt8>(
+                Topic::line_estimate_discrete,
+                15,
+                std::bind(&BangBang::line_est_discrete_callback)
+            );
+
+            publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
+
+            timer_ = create_wall_timer(100ms, std::bind(&BangBang::publish_cmd_vel));
 
         }
+
+        public:
+
+        void publish_cmd_vel();
+
+        void line_est_continuous_callback(std_msgs::msg::Float32::SharedPtr msg);
+
+        void line_est_discrete_callback(std_msgs::msg::UInt8::SharedPtr msg);
+
     };
 }
