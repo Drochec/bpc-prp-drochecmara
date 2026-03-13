@@ -1,5 +1,7 @@
 #include  "line.hpp"
 #include <algorithm>
+#include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace nodes {
     void LineNode::on_line_sensors_msg(const std_msgs::msg::UInt16MultiArray::SharedPtr msg) {
@@ -25,6 +27,19 @@ namespace nodes {
 
     DiscreteLinePose LineNode::get_discrete_line_pose() const {
         return algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
+        
+    }
+
+    void LineNode::publish_line_estimate() const {
+        auto msg_line_discrete = std_msgs::msg::UInt8();
+        msg_line_discrete.data = static_cast<unsigned char>(get_discrete_line_pose());
+        
+        auto msg_line = std_msgs::msg::Float32();
+        msg_line.data = get_continuous_line_pose();
+
+        publisher_line_discrete_->publish(msg_line_discrete);
+        publisher_line_->publish(msg_line);
+        
     }
 }
 

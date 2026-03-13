@@ -12,6 +12,8 @@ namespace Topic {
     const std::string encoders = "/bpc_prp_robot/encoders";
     const std::string line = "/bpc_prp_robot/line_sensors";
     const std::string cmd_vel = "/bpc_prp_robot/cmd_vel";
+    const std::string line_estimate_discrete = "/bpc_prp_robot/line_estimate_discrete";
+    const std::string line_estimate = "/bpc_prp_robot/line_estimate";
 };
 
 namespace Frame {
