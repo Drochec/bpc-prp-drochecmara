@@ -6,6 +6,7 @@
 #include "nodes/io_node.hpp"
 #include "nodes/motor.hpp"
 #include "algorithms/kinematics.hpp"
+#include "nodes/gamepad_node.hpp"
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
@@ -17,12 +18,14 @@ int main(int argc, char* argv[]) {
     auto io_node = std::make_shared<nodes::IoNode>();
     auto motor_node = std::make_shared<nodes::MotorNode>();
     auto line_node = std::make_shared<nodes::LineNode>();
+    auto joy_node = std::make_shared<nodes::JoyNode>();
    
     
     //Setup ROS and spin nodes
     executor->add_node(io_node);
     executor->add_node(motor_node);
     executor->add_node(line_node);
+    executor->add_node(joy_node);
 
     executor->spin();
 

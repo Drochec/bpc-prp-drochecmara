@@ -23,17 +23,17 @@ namespace loops {
             subscriber_line_est_ = create_subscription<std_msgs::msg::Float32>(
                 Topic::line_estimate,
                 10,
-                std::bind(&BangBang::line_est_continuous_callback));
+                std::bind(&BangBang::line_est_continuous_callback, this, std::placeholders::_1));
             
             subscriber_line_est_discrete_ = create_subscription<std_msgs::msg::UInt8>(
                 Topic::line_estimate_discrete,
                 15,
-                std::bind(&BangBang::line_est_discrete_callback)
+                std::bind(&BangBang::line_est_discrete_callback,this, std::placeholders::_1)
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
 
-            timer_ = create_wall_timer(100ms, std::bind(&BangBang::publish_cmd_vel));
+            timer_ = create_wall_timer(100ms, std::bind(&BangBang::publish_cmd_vel,this));
 
         }
 

@@ -15,13 +15,14 @@ find_package(OpenCV REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
+
 set(SRC
-    ${CMAKE_SOURCE_DIR}/src/example.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/io_node.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/motor.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/line.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
         ${CMAKE_SOURCE_DIR}/src/algorithms/kinematics.cpp
+        ${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
 )
 
 set(AMENT_LIBS rclcpp std_msgs sensor_msgs cv_bridge image_transport)
@@ -31,11 +32,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         include
         include/nodes
         include/algorithms
+        include/loops
         ${OpenCV_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         /opt/ros/humble/include
 )
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${SDL2_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} SDL2)
 ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs sensor_msgs cv_bridge image_transport visualization_msgs)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
