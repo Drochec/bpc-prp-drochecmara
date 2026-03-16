@@ -20,43 +20,69 @@ namespace algorithms {
     }
 
     Coordinates Kinematics::forward(Encoders encoder_new) const {
-        float d_L = (encoder_new.l - encoders_.l) / TPR_ * M_PI * wheel_radius_;
-        float d_R = (encoder_new.r - encoders_.r) / TPR_ * M_PI * wheel_radius_;
+        // compute signed delta with wraparound
+        int32_t delta_l = int32_t(encoder_new.l - encoders_.l);
+        if (delta_l > 2147483647) delta_l -= 4294967296;  // wrap backward
+        else if (delta_l < -2147483648) delta_l += 4294967296; // wrap forward
 
-        float d = (d_R + d_L) / 2;
-        float d_Fi = (d_R - d_L) / wheel_base_;
+        int32_t delta_r = int32_t(encoder_new.r - encoders_.r);
+        if (delta_r > 2147483647) delta_r -= 4294967296;
+        else if (delta_r < -2147483648) delta_r += 4294967296;
 
-        float x_new = pose_.x + d * cos(pose_.fi + d_Fi/2);
-        float y_new = pose_.y + d * sin(pose_.fi + d_Fi/2);
-        float fi_new = pose_.fi + d_Fi;
+        // convert ticks to distance
+        float d_L = float(delta_l) * M_PI * wheel_radius_ / TPR_;
+        float d_R = float(delta_r) * M_PI * wheel_radius_ / TPR_;
 
-        return Coordinates{x_new, y_new, fi_new};
-    }
-    Encoders Kinematics::inverse(Coordinates new_pos) const {
-        if (pose_.fi == new_pos.fi) {
-            float d = hypot(new_pos.x-pose_.x, new_pos.y-pose_.y);
-            int encoder_update = TPR_/M_PI / wheel_radius_ * d;
-
-            return Encoders{encoders_.r+encoder_update,encoders_.l+encoder_update};
+        // check for straight motion
+        if (fabs(d_R - d_L) < 1e-6f) {
+            float d = (d_R + d_L) / 2.0f;
+            Coordinates new_pose;
+            new_pose.x = pose_.x + d * cos(pose_.fi);
+            new_pose.y = pose_.y + d * sin(pose_.fi);
+            new_pose.fi = pose_.fi;
+            return new_pose;
         }
-
         else {
-            float d_x_r = cos(pose_.fi)*(new_pos.x - pose_.x) + sin(pose_.fi)*(new_pos.y - pose_.y);
-            float d_fi = new_pos.fi-pose_.fi;
-            //float d_y_r = -sin(pose_.fi)*(new_pos.x - pose_.x) + cos(pose_.fi)*(new_pos.y - pose_.y);
+            float d = (d_R + d_L) / 2.0f;
+            float d_fi = (d_R - d_L) / wheel_base_;
+            float fi_mid = pose_.fi + d_fi / 2.0f;
 
-            float R = (d_x_r)/(sin(d_fi));
-
-            float d = R * d_fi;
-
-            float d_R = d + wheel_base_/2*d_fi;
-            float d_L = d - wheel_base_/2*d_fi;
-
-            int encoder_update_l = TPR_/M_PI / wheel_radius_ * d_L;
-            int encoder_update_r = TPR_/M_PI / wheel_radius_ * d_R;
-
-            return Encoders{encoders_.l+encoder_update_l,encoders_.r+encoder_update_r};
+            return Coordinates{
+                static_cast<float>(pose_.x + d * cos(fi_mid)),
+                static_cast<float>(pose_.y + d * sin(fi_mid)),
+                static_cast<float>(pose_.fi + d_fi)
+            };
         }
+    }
 
+    Encoders Kinematics::inverse(Coordinates new_pos) const {
+        float dx = new_pos.x - pose_.x;
+        float dy = new_pos.y - pose_.y;
+        float d_fi = new_pos.fi - pose_.fi;
+
+        if (fabs(d_fi) < 1e-6f) {
+            // straight motion
+            float d = hypot(dx, dy);
+            int32_t delta = std::lround(TPR_ * d / (M_PI * wheel_radius_));
+            uint32_t new_l = encoders_.l + delta;
+            uint32_t new_r = encoders_.r + delta;
+            return Encoders{new_l, new_r};
+        }
+        else {
+            // turning motion
+            float fi_mid = pose_.fi + d_fi / 2.0f;
+            float d = dx * cos(fi_mid) + dy * sin(fi_mid);
+
+            float d_R = d + (wheel_base_ / 2.0f) * d_fi;
+            float d_L = d - (wheel_base_ / 2.0f) * d_fi;
+
+            int32_t delta_l = std::lround(TPR_ * d_L / (M_PI * wheel_radius_));
+            int32_t delta_r = std::lround(TPR_ * d_R / (M_PI * wheel_radius_));
+
+            uint32_t new_l = encoders_.l + delta_l;
+            uint32_t new_r = encoders_.r + delta_r;
+
+            return Encoders{new_l, new_r};
+        }
     }
 }

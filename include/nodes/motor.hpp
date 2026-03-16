@@ -17,7 +17,7 @@ namespace nodes {
 
     float constexpr max_speed = 19.5f; //rad/s
     double constexpr wheel_radius = 68.55e-3; //m
-    double constexpr wheel_base = 0e-3; //m
+    double constexpr wheel_base = 30.00e-3; //m
     int constexpr TPR = 585; //Ticks per revolution
 
     class MotorNode : public rclcpp::Node {

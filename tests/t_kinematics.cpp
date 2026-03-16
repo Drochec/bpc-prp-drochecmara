@@ -1,14 +1,17 @@
 #include <gtest/gtest.h>
-#include "../include/kinematics.hpp"
+#include "../include/algorithms/kinematics.hpp"
+#include "../include/nodes/motor.hpp"
 #include <cmath>
+
+#include "motor.hpp"
 
 using namespace algorithms;
 
 constexpr float ERROR = 0.001f;
-constexpr float WHEEL_BASE = 0.12f;
-constexpr float WHEEL_RADIUS = 0.033f;
+constexpr float WHEEL_BASE = nodes::wheel_base;
+constexpr float WHEEL_RADIUS = nodes::wheel_radius;
 constexpr float WHEEL_CIRCUMFERENCE = 2 * M_PI * WHEEL_RADIUS;
-constexpr int32_t PULSES_PER_ROTATION = 550;
+constexpr int32_t PULSES_PER_ROTATION = nodes::TPR;
 
 TEST(KinematicsTest, BackwardZeroVelocitySI) {
     constexpr float linear = 0.0f;
@@ -35,8 +38,8 @@ TEST(KinematicsTest, BackwardPositiveLinearVelocitySI) {
 }
 
 TEST(KinematicsTest, BackwardPositiveAngularVelocitySI) {
-    constexpr float linear = 1.0f;
-    constexpr float angular = 0.0f;
+    constexpr float linear = 0.0f;
+    constexpr float angular = 1.0f;
     constexpr float expected_l = -(0.5f * WHEEL_BASE) / WHEEL_CIRCUMFERENCE * (2 * M_PI);
     constexpr float expected_r = +(0.5f * WHEEL_BASE) / WHEEL_CIRCUMFERENCE * (2 * M_PI);
 
@@ -95,13 +98,13 @@ TEST(KinematicsTest, ForwardAndBackwardSI) {
 
 
 TEST(KinematicsTest, ForwardAndBackwardEncoderDiff) {
-    constexpr int encoder_l = 0;
-    constexpr int encoder_r = 550;
+    constexpr uint32_t encoder_l = 135822;  //aprox. 100m
+    constexpr uint32_t encoder_r = 113411;  //aprox. 90m
 
     Kinematics kin(WHEEL_RADIUS, WHEEL_BASE, PULSES_PER_ROTATION);
     auto d_robot_pose = kin.forward(Encoders {encoder_l,encoder_r});
     auto result = kin.inverse(d_robot_pose);
-    EXPECT_NEAR(result.l, encoder_l, 1);
+    EXPECT_NEAR(result.l, encoder_l, 1);   //error rate under 20 ticks
     EXPECT_NEAR(result.r, encoder_r, 1);
 }
 
