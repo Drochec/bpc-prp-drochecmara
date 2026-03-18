@@ -46,13 +46,13 @@ namespace nodes {
 namespace algorithms {
     DiscreteLinePose LineEstimator::estimate_discrete_line_pose(const SensorNorm& sensor_vals) {
         auto line_pos = sensor_vals.left - sensor_vals.right;
-        if (line_pos < 0) {
+        if (line_pos < -treshold) {
             return DiscreteLinePose::LineOnRight;
         }
-        else if (line_pos > 0) {
+        else if (line_pos > treshold) {
             return DiscreteLinePose::LineOnLeft;
         }
-        else if (line_pos == 0) {
+        else if ((-treshold <= line_pos) || (line_pos <= treshold)){
             return DiscreteLinePose::LineBoth;
         }
         else {
@@ -61,7 +61,7 @@ namespace algorithms {
     }
 
     float LineEstimator::estimate_continuous_line_pose(const SensorNorm& sensor_vals) {
-        float pos = (-sensor_offset * sensor_vals.left + sensor_offset * sensor_vals.right) / (sensor_vals.left + sensor_vals.right);
+        float pos = (sensor_vals.left-sensor_vals.right)*sensor_offset; //(-sensor_offset * sensor_vals.left + sensor_offset * sensor_vals.right) / (sensor_vals.left + sensor_vals.right);
 
         return std::clamp(pos, -1.0f, 1.0f);
     }

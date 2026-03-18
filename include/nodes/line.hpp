@@ -44,7 +44,7 @@ namespace nodes {
         rclcpp::TimerBase::SharedPtr timer_;
 
         SensorVals sensor_vals_raw_;
-        SensorVals sensor_max_ = {450, 300};
+        SensorVals sensor_max_ = {450, 600};
         SensorVals sensor_min_ = {25, 25};
         SensorNorm sensor_vals_;
 
@@ -60,7 +60,7 @@ namespace nodes {
                     std::bind(&LineNode::on_line_sensors_msg, this, std::placeholders::_1)
                 );
 
-            timer_ = this->create_wall_timer(100ms,std::bind(&LineNode::publish_line_estimate, this));
+            timer_ = this->create_wall_timer(10ms,std::bind(&LineNode::publish_line_estimate, this));
             
         };
 
@@ -79,9 +79,10 @@ namespace nodes {
 }
 
 namespace algorithms {
-    //float constexpr sensor_offset = 0.0145; //sirsi rozostup
-    float constexpr sensor_offset = 0.0075; //pri sebe
-    
+    float constexpr sensor_offset = 0.0145; //sirsi rozostup
+    //float constexpr sensor_offset = 0.0075; //pri sebe
+    float constexpr treshold = 0.0005;     //treba normovat
+
     class LineEstimator {
     public:
         static DiscreteLinePose estimate_discrete_line_pose(const SensorNorm& sensor_vals);

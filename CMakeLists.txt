@@ -23,6 +23,7 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
         ${CMAKE_SOURCE_DIR}/src/algorithms/kinematics.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
+        ${CMAKE_SOURCE_DIR}/src/loops/line_loop_pid.cpp
 )
 
 set(AMENT_LIBS rclcpp std_msgs sensor_msgs cv_bridge image_transport)

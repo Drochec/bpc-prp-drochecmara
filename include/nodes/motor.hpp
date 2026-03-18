@@ -17,7 +17,7 @@ namespace nodes {
 
     float constexpr max_speed = 19.5f; //rad/s
     double constexpr wheel_radius = 68.55e-3; //m
-    double constexpr wheel_base = 30.00e-3; //m
+    double constexpr wheel_base = 130.00e-3; //m
     int constexpr TPR = 585; //Ticks per revolution
 
     class MotorNode : public rclcpp::Node {
@@ -51,7 +51,7 @@ namespace nodes {
                 1,
                 std::bind(&MotorNode::cmd_vel_callback, this, std::placeholders::_1));
 
-            timer_ = this->create_wall_timer(100ms,std::bind(&MotorNode::set_speed_callback, this));
+            timer_ = this->create_wall_timer(10ms,std::bind(&MotorNode::set_speed_callback, this));
         }
 
     private:
