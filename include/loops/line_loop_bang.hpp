@@ -34,7 +34,7 @@ namespace loops {
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
 
-            timer_ = create_wall_timer(20ms, std::bind(&BangBang::publish_cmd_vel,this));
+            timer_ = create_wall_timer(5ms, std::bind(&BangBang::publish_cmd_vel,this));
 
         }
 

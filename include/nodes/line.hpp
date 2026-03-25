@@ -60,7 +60,7 @@ namespace nodes {
                     std::bind(&LineNode::on_line_sensors_msg, this, std::placeholders::_1)
                 );
 
-            timer_ = this->create_wall_timer(10ms,std::bind(&LineNode::publish_line_estimate, this));
+            timer_ = this->create_wall_timer(5ms,std::bind(&LineNode::publish_line_estimate, this));
             
         };
 

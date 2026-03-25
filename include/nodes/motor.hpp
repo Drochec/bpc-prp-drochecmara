@@ -51,7 +51,7 @@ namespace nodes {
                 1,
                 std::bind(&MotorNode::cmd_vel_callback, this, std::placeholders::_1));
 
-            timer_ = this->create_wall_timer(10ms,std::bind(&MotorNode::set_speed_callback, this));
+            timer_ = this->create_wall_timer(5ms,std::bind(&MotorNode::set_speed_callback, this));
         }
 
     private:

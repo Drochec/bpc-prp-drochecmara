@@ -3,7 +3,7 @@
 namespace loops {
     void PidNode::publish_cmd_vel(){
 
-        cmd_vel_.w = pid_.step(line_pose_,20e-3);
+        cmd_vel_.w = pid_.step(line_pose_,5e-3);
 
         auto msg = std_msgs::msg::Float32MultiArray();
 

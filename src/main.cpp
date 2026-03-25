@@ -21,16 +21,16 @@ int main(int argc, char* argv[]) {
     auto motor_node = std::make_shared<nodes::MotorNode>();
     auto line_node = std::make_shared<nodes::LineNode>();
     //auto joy_node = std::make_shared<nodes::JoyNode>();
-    //auto bangbang_node = std::make_shared<loops::BangBang>();
-    auto pid_node = std::make_shared<loops::PidNode>();
+    auto bangbang_node = std::make_shared<loops::BangBang>();
+    //auto pid_node = std::make_shared<loops::PidNode>();
     
     //Setup ROS and spin nodes
-    executor->add_node(io_node);
+    //executor->add_node(io_node);
     executor->add_node(motor_node);
     executor->add_node(line_node);
     //executor->add_node(joy_node);
-    //executor->add_node(bangbang_node);
-    executor->add_node(pid_node);
+    executor->add_node(bangbang_node);
+    //executor->add_node(pid_node);
 
     executor->spin();
 

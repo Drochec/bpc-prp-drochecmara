@@ -17,9 +17,9 @@ namespace loops {
 
     constexpr float forward_speed_pid = 0.075;
 
-    constexpr float Kp = 10;
+    constexpr float Kp = 15;
     constexpr float Ki = 0;
-    constexpr float Kd = 0;
+    constexpr float Kd = 0.5;
 
 
     class PidNode : public rclcpp::Node {
@@ -42,7 +42,7 @@ namespace loops {
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,10);
 
-            timer_ = create_wall_timer(20ms, std::bind(&PidNode::publish_cmd_vel,this));
+            timer_ = create_wall_timer(5ms, std::bind(&PidNode::publish_cmd_vel,this));
 
         }
 
