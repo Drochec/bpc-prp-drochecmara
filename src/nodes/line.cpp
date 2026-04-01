@@ -18,7 +18,7 @@ namespace nodes {
         //RCLCPP_INFO(this->get_logger(), "Received raw, left: %u, right: %u", sensor_vals_raw_.left, sensor_vals_raw_.right);
         auto estimated_discrete_pos = algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
         auto estimated_line_pos = algorithms::LineEstimator::estimate_continuous_line_pose(sensor_vals_);
-        RCLCPP_INFO(this->get_logger(), "Line pos: %f", estimated_line_pos);
+        //RCLCPP_INFO(this->get_logger(), "Line pos: %f", estimated_line_pos);
     };
 
     float LineNode::get_continuous_line_pose() const {
