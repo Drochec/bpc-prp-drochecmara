@@ -5,22 +5,34 @@
 #include <chrono>
 #include <rclcpp/rclcpp.hpp>
 #include "kinematics.hpp"
+#include "lidar_node.hpp"
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/detail/float32__struct.hpp>
 
 using namespace std::chrono_literals;
 namespace loops {
+    enum class corridor_state {
+        CALIBRATION,
+        CORRIDOR_FOLLOWING,
+        TURNING,
+    };
 
     constexpr float forward_speed_corridor = 0.075;
-
 
     class CorridorBang : public rclcpp::Node {
 
         algorithms::RobotSpeed cmd_vel_;
+        algorithms::LidarFilterResults lidar_vals_;
+        float yaw_estimate_;
+        corridor_state state_;
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
-        rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::TimerBase::SharedPtr publish_timer_;
+        rclcpp::TimerBase::SharedPtr decision_timer_;
     public:
         CorridorBang() : rclcpp::Node("bang_bang"), cmd_vel_({forward_speed_corridor,0}) {
 
@@ -30,9 +42,15 @@ namespace loops {
                 std::bind(&CorridorBang::corridor_est_discrete_callback,this, std::placeholders::_1)
             );
 
+            subscriber_yaw_est_ = create_subscription<std_msgs::msg::Float32>(
+                Topic::yaw_estimate,
+                15,
+                std::bind(&CorridorBang::yaw_est_callback,this, std::placeholders::_1)
+            );
+
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
 
-            timer_ = create_wall_timer(25ms, std::bind(&CorridorBang::publish_cmd_vel,this));
+            publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorBang::publish_cmd_vel,this));
 
         }
 
@@ -41,6 +59,10 @@ namespace loops {
         void publish_cmd_vel();
 
         void corridor_est_discrete_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
+
+        void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
+
+        void state_machine_driving();
 
     };
 }

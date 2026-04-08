@@ -4,6 +4,7 @@
 #include "corridor_bang.hpp"
 #include "RosExampleClass.h"
 #include "helper.hpp"
+#include "imu_node.hpp"
 #include "lidar_node.hpp"
 #include "nodes/line.hpp"
 #include "nodes/io_node.hpp"
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
     auto io_node = std::make_shared<nodes::IoNode>();
     auto motor_node = std::make_shared<nodes::MotorNode>();
     auto line_node = std::make_shared<nodes::LineNode>();
+    auto imu_node = std::make_shared<nodes::ImuNode>();
     auto lidar_node = std::make_shared<nodes::LidarNode>();
     //auto joy_node = std::make_shared<nodes::JoyNode>();
     //auto bangbang_node = std::make_shared<loops::BangBang>();
@@ -33,6 +35,7 @@ int main(int argc, char* argv[]) {
     //executor->add_node(io_node);
     executor->add_node(motor_node);
     executor->add_node(line_node);
+    executor->add_node(imu_node);
     executor->add_node(lidar_node);
     //executor->add_node(joy_node);
     //executor->add_node(bangbang_node);

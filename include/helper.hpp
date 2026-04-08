@@ -20,6 +20,9 @@ namespace Topic {
     //Lidar
     const std::string lidar = "/bpc_prp_robot/lidar";
     const std::string range_estimate = "/bpc_prp_robot/range_estimate";
+    //IMU
+    const std::string imu = "/bpc_prp_robot/imu";
+    const std::string yaw_estimate = "/bpc_prp_robot/yaw_estimate";
 
 };
 

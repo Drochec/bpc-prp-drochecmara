@@ -1,6 +1,8 @@
 #include <corridor_bang.hpp>
+#include <math.h>
 #include <sys/stat.h>
 
+#include "imu_node.hpp"
 #include "lidar_node.hpp"
 
 namespace loops {
@@ -14,28 +16,65 @@ namespace loops {
 
     void CorridorBang::corridor_est_discrete_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg) {
 
+        lidar_vals_ = {msg->data[0],msg->data[1],msg->data[2],msg->data[3]};
 
-        float K = 0.6;
-        auto distance_front = msg->data[0];
-
-        if (distance_front <= 0.25) {
-            cmd_vel_ = {0,0};
-
-        }
-
-        else {
-            cmd_vel_.v = forward_speed_corridor;
-
-            auto distance_left = msg->data[2];
-            auto distance_right = msg->data[3];
-
-            auto error = distance_left - distance_right;
-            if (abs(error) < 1e-3) {
-                error = 0;
-            }
-
-            cmd_vel_.w = K * -error;
-            RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",distance_left, distance_right, error, cmd_vel_.w);
-        }
     }
+
+    void CorridorBang::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
+
+        yaw_estimate_ = msg->data;
+    }
+
+    void CorridorBang::state_machine_driving() {
+        float K = 0.6;
+        auto error = lidar_vals_.left - lidar_vals_.right;
+        switch (state_) {
+            case corridor_state::CALIBRATION:
+                if (isnan(yaw_estimate_)) {
+                    break;
+                }
+                else {
+                    state_ = corridor_state::CORRIDOR_FOLLOWING;
+                }
+
+            case corridor_state::CORRIDOR_FOLLOWING:
+                //Dead-end check
+                if (lidar_vals_.front <= 0.25) {
+                    cmd_vel_ = {0, 0};
+                    state_ = corridor_state::TURNING;
+                    break;
+                }
+                //Intersection check
+                if (lidar_vals_.left >= 0.5) {
+                    //set yaw to + pi/2
+                }
+                else if(lidar_vals_.right >= 0.5) {
+                    //set yaw to - pi/2
+                }
+
+                //Corridor following
+                cmd_vel_.v = forward_speed_corridor;
+
+                if (abs(error) < 1e-3) {
+                    error = 0;
+                }
+
+                cmd_vel_.w = K * -error;
+                //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
+
+                // Keep centered using P/PID based on side distances
+                // If front is blocked and one side is open → switch to TURNING
+                break;
+
+            case corridor_state::TURNING:
+
+
+                // Use IMU to track rotation
+                // Rotate until yaw changes by ±90°
+                // Then return to CORRIDOR_FOLLOWING
+                break;
+        }
+
+    }
+
 }

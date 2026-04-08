@@ -20,6 +20,7 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/nodes/io_node.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/motor.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/line.cpp
+        ${CMAKE_SOURCE_DIR}/src/nodes/imu_node.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
         ${CMAKE_SOURCE_DIR}/src/algorithms/kinematics.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
