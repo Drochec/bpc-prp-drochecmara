@@ -27,6 +27,8 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_pid.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/lidar_node.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/corridor_bang.cpp
+        ${CMAKE_SOURCE_DIR}/src/nodes/camera_node.cpp
+
 )
 
 set(AMENT_LIBS rclcpp std_msgs sensor_msgs cv_bridge image_transport)

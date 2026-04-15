@@ -15,7 +15,9 @@ namespace nodes {
     private:
         // Subscriber
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
+        rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr publisher_state_;
         rclcpp::TimerBase::SharedPtr timer_;
 
     public:
@@ -23,6 +25,8 @@ namespace nodes {
         IoNode() : rclcpp::Node("io_node")
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 10);
+
+            publisher_state_ = this->create_publisher<std_msgs::msg::UInt8>(Topic::machine_state, 10);
 
             subscriber_ = this->create_subscription<std_msgs::msg::UInt8>(
                 Topic::buttons,
