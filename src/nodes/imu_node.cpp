@@ -1,7 +1,9 @@
 #include "imu_node.hpp"
 
 namespace nodes {
+
     constexpr double imu_dt = 20e-3;
+
     void ImuNode::on_imu_msg(const sensor_msgs::msg::Imu::SharedPtr msg) {
 
         float gyro_z = msg->angular_velocity.z;

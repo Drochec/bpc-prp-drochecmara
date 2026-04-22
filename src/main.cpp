@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     //auto pid_node = std::make_shared<loops::PidNode>();
     
     //Setup ROS and spin nodes
-    executor->add_node(io_node);
+    //executor->add_node(io_node);
     executor->add_node(motor_node);
     executor->add_node(line_node);
     executor->add_node(imu_node);

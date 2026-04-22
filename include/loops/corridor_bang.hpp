@@ -18,18 +18,28 @@ namespace loops {
     enum class corridor_state {
         CALIBRATION,
         CORRIDOR_FOLLOWING,
+        CENTERING,
+        INTERSECTION,
+        EXIT_INTERSECTION,
         TURNING,
     };
 
     constexpr float forward_speed_corridor = 0.075;
+    constexpr float wall_threshold = 0.6;
+    constexpr float front_stop = 0.25;
+    constexpr float exit_centering_error = 0.05;
+    bool exiting_corridor = false;
 
     class CorridorBang : public rclcpp::Node {
 
         algorithms::RobotSpeed cmd_vel_;
         algorithms::LidarFilterResults lidar_vals_;
         float yaw_estimate_;
+        float set_yaw_;
+
         corridor_state state_;
         algorithms::Pid pid_yaw_;
+        algorithms::Pid pid_centering_;
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
@@ -37,13 +47,16 @@ namespace loops {
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
+
     public:
         CorridorBang() : rclcpp::Node("bang_bang"),
                         cmd_vel_({0,0}),
                         lidar_vals_({0,0,0,0}),
                         yaw_estimate_(0),
+                        set_yaw_(0),
                         state_(corridor_state::CALIBRATION),
-                        pid_yaw_(5,0.2,0)
+                        pid_yaw_(3,0.3,0),
+                        pid_centering_(10,0,1)
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
