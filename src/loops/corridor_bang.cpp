@@ -128,7 +128,7 @@ namespace loops {
                     set_yaw_ = yaw_estimate_ - M_PI/2;
                 }
                 else if (lidar_vals_.front > wall_threshold) {
-                    exiting_corridor = true;
+                    exiting_corridor_ = true;
                     //TODO pomocou flag vypnut kontrolu stien,vytiahnut si z motorov hodnoty encoderov a vypnut flag, ked prejdeme 40 s robotom
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                 }

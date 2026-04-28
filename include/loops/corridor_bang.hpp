@@ -28,7 +28,7 @@ namespace loops {
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
     constexpr float exit_centering_error = 0.05;
-    bool exiting_corridor = false;
+    
 
     class CorridorBang : public rclcpp::Node {
 
@@ -36,6 +36,7 @@ namespace loops {
         algorithms::LidarFilterResults lidar_vals_;
         float yaw_estimate_;
         float set_yaw_;
+        bool exiting_corridor_;
 
         corridor_state state_;
         algorithms::Pid pid_yaw_;
@@ -54,6 +55,7 @@ namespace loops {
                         lidar_vals_({0,0,0,0}),
                         yaw_estimate_(0),
                         set_yaw_(0),
+                        exiting_corridor_(false),
                         state_(corridor_state::CALIBRATION),
                         pid_yaw_(3,0.3,0),
                         pid_centering_(10,0,1)
