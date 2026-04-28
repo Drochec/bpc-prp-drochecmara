@@ -60,7 +60,7 @@ namespace loops {
                 cmd_vel_.v = forward_speed_corridor;
                 //cmd_vel_.v = 1.765 * lidar_vals_.front - 0.265;
 
-                cmd_vel_.w = pid_yaw_.step(error_yaw,30e-3);
+                cmd_vel_.w = pid_yaw_.step(error_yaw);
 
 
                 //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
@@ -78,7 +78,7 @@ namespace loops {
                       }
 
                 // Aggressive controller
-                cmd_vel_.w = pid_centering_.step(error_lidar, 30e-3);
+                cmd_vel_.w = pid_centering_.step(error_lidar);
 
                 // Slow forward motion (important!)
                 cmd_vel_.v = 0.15;
@@ -138,7 +138,7 @@ namespace loops {
                 // Then return to CORRIDOR_FOLLOWING
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
-                cmd_vel_.w = pid_yaw_.step(error_yaw,30e-3);
+                cmd_vel_.w = pid_yaw_.step(error_yaw);
                 cmd_vel_.v = 0.2;
 
                 if (abs(error_yaw) <= 0.1) {
