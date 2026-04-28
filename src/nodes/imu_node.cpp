@@ -64,4 +64,39 @@ namespace nodes {
 
         publisher_->publish(msg);
     }
+
+
+    //Services
+
+    void ImuNode::calibrate_handle(
+        const std::shared_ptr<prp_project::srv::CalibrateTrigger::Request> request,
+        std::shared_ptr<prp_project::srv::CalibrateTrigger::Response> response) {
+
+        
+        (void)request;  // if unused
+
+        RCLCPP_INFO(this->get_logger(), "Calibration requested");
+
+        // Do your calibration logic here
+
+        reset_imu();
+
+        
+        response->success = true;
+        response->message = "Calibration started";
+    }
+
+    void ImuNode::reset_yaw_handle(
+        const std::shared_ptr<prp_project::srv::ResetYawTrigger::Request> request,
+        std::shared_ptr<prp_project::srv::ResetYawTrigger::Response> response) {
+
+            (void)request;
+
+            RCLCPP_INFO(get_logger(), "Yaw reset requested");
+
+            planar_integrator_.reset();
+
+            response->success = true;
+            response->message = "Yaw reset";
+        }
 }

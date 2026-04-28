@@ -1,4 +1,4 @@
-#include <corridor_bang.hpp>
+#include <corridor_nav.hpp>
 #include <math.h>
 #include <sys/stat.h>
 
@@ -8,36 +8,7 @@
 namespace loops {
 
 
-
-
-    void CorridorBang::publish_cmd_vel(){
-        auto msg = std_msgs::msg::Float32MultiArray();
-
-        msg.data = {cmd_vel_.v,cmd_vel_.w};
-
-        publisher_cmd_vel_->publish(msg);
-    }
-
-    void CorridorBang::corridor_est_discrete_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg) {
-
-        lidar_vals_ = {msg->data[0],msg->data[1],msg->data[2],msg->data[3]};
-
-    }
-
-    void CorridorBang::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
-
-        yaw_estimate_ = msg->data;
-    }
-
-    void CorridorBang::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
-        if (msg->data == 0) {
-            cmd_vel_ = {0, 0};
-            state_ = corridor_state::CALIBRATION;
-        }
-    }
-
-
-    void CorridorBang::state_machine_driving() {
+    void CorridorNav::state_machine() {
         RCLCPP_INFO(get_logger(), "State: %u",  static_cast<unsigned int>(state_));
 
 
@@ -46,6 +17,7 @@ namespace loops {
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
         switch (state_) {
+
             case corridor_state::CALIBRATION:
                 if (isnan(yaw_estimate_)) {
                     break;
@@ -176,12 +148,89 @@ namespace loops {
 
                 break;
 
+            case corridor_state::RESET:
+
+                cmd_vel_ = {0, 0};
+                set_yaw_ = 0;
+                pid_yaw_.reset();
+                pid_centering_.reset();
+                //exiting_corridor
+                state_ = corridor_state::WAIT;
+
+                break;
+
         }
 
 
 
+    }
 
+    void CorridorNav::send_calibrate_trigger(){
 
+        auto request = std::make_shared<prp_project::srv::CalibrateTrigger::Request>();
+
+        calibrate_client_->async_send_request(request);
+    }
+    
+    void CorridorNav::send_reset_yaw(){
+
+        auto request = std::make_shared<prp_project::srv::ResetYawTrigger::Request>();
+
+        reset_yaw_client_->async_send_request(request);
+    }
+
+    void CorridorNav::button_cmd_handle(
+            const std::shared_ptr<prp_project::srv::ButtonCmd::Request> request,
+            std::shared_ptr<prp_project::srv::ButtonCmd::Response> response
+        ) {
+        
+        auto received_state = request->command;
+
+        if (received_state == "START") {
+            send_calibrate_trigger();
+            state_ = corridor_state::CALIBRATION;
+        }
+
+        else if (received_state == "STOP") {
+            state_ = corridor_state::RESET;
+        }
+
+        else {
+            RCLCPP_WARN(get_logger(),"Unrecognized command from buttons received, ignoring...");
+            response->success = false;
+            response->message = "Unrecognized";
+            return ;
+        }
+
+        response->success = true;
+        response->message = "Commanded state received";
+        
+        }
+
+    void CorridorNav::publish_cmd_vel(){
+        auto msg = std_msgs::msg::Float32MultiArray();
+
+        msg.data = {cmd_vel_.v,cmd_vel_.w};
+
+        publisher_cmd_vel_->publish(msg);
+    }
+
+    void CorridorNav::range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+
+        lidar_vals_ = {msg->data[0],msg->data[1],msg->data[2],msg->data[3]};
+
+    }
+
+    void CorridorNav::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
+
+        yaw_estimate_ = msg->data;
+    }
+
+    void CorridorNav::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
+        if (msg->data == 0) {
+            cmd_vel_ = {0, 0};
+            state_ = corridor_state::CALIBRATION;
+        }
     }
 
 }

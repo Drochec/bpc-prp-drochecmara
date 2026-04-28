@@ -12,16 +12,22 @@
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/detail/float32__struct.hpp>
 #include "pid.hpp"
+#include "prp_project/srv/calibrate_trigger.hpp"
+#include "prp_project/srv/reset_yaw_trigger.hpp"
+#include "prp_project/srv/button_cmd.hpp"
 
 using namespace std::chrono_literals;
+
 namespace loops {
     enum class corridor_state {
+        WAIT,
         CALIBRATION,
         CORRIDOR_FOLLOWING,
         CENTERING,
         INTERSECTION,
         EXIT_INTERSECTION,
         TURNING,
+        RESET,
     };
 
     constexpr float forward_speed_corridor = 0.075;
@@ -30,7 +36,7 @@ namespace loops {
     constexpr float exit_centering_error = 0.05;
     
 
-    class CorridorBang : public rclcpp::Node {
+    class CorridorNav : public rclcpp::Node {
 
         algorithms::RobotSpeed cmd_vel_;
         algorithms::LidarFilterResults lidar_vals_;
@@ -46,17 +52,47 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
+
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
 
+
+        rclcpp::Service<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_service_;
+
+        rclcpp::Client<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
+        rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
+
+
+
+
+        void publish_cmd_vel();
+
+        void range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
+
+        void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
+
+        void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
+
+        void state_machine();
+
+        void button_cmd_handle(
+            const std::shared_ptr<prp_project::srv::ButtonCmd::Request> request,
+            std::shared_ptr<prp_project::srv::ButtonCmd::Response> response
+        );
+
+        void send_calibrate_trigger();
+
+        void send_reset_yaw();
+
     public:
-        CorridorBang() : rclcpp::Node("bang_bang"),
+
+        CorridorNav() : rclcpp::Node("bang_bang"),
                         cmd_vel_({0,0}),
                         lidar_vals_({0,0,0,0}),
                         yaw_estimate_(0),
                         set_yaw_(0),
                         exiting_corridor_(false),
-                        state_(corridor_state::CALIBRATION),
+                        state_(corridor_state::WAIT),
                         pid_yaw_(3,0.3,0),
                         pid_centering_(10,0,1)
         {
@@ -64,40 +100,36 @@ namespace loops {
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
                 Topic::range_estimate,
                 15,
-                std::bind(&CorridorBang::corridor_est_discrete_callback,this, std::placeholders::_1)
+                std::bind(&CorridorNav::range_est_callback,this, std::placeholders::_1)
             );
 
             subscriber_yaw_est_ = create_subscription<std_msgs::msg::Float32>(
                 Topic::yaw_estimate,
                 15,
-                std::bind(&CorridorBang::yaw_est_callback,this, std::placeholders::_1)
+                std::bind(&CorridorNav::yaw_est_callback,this, std::placeholders::_1)
             );
 
             subscriber_state_ = create_subscription<std_msgs::msg::UInt8>(
                 Topic::machine_state,
                 15,
-                std::bind(&CorridorBang::set_state_callback,this, std::placeholders::_1)
+                std::bind(&CorridorNav::set_state_callback,this, std::placeholders::_1)
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
 
-            publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorBang::publish_cmd_vel,this));
+            publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 
-            decision_timer_ = create_wall_timer(30ms, std::bind(&CorridorBang::state_machine_driving,this));
+            decision_timer_ = create_wall_timer(30ms, std::bind(&CorridorNav::state_machine,this));
+
+            calibrate_client_ = create_client<prp_project::srv::CalibrateTrigger>("calibrate");
+            reset_yaw_client_ = create_client<prp_project::srv::ResetYawTrigger>("reset_yaw");
+
+            button_cmd_service_ = create_service<prp_project::srv::ButtonCmd>(
+                "button_cmd",
+                std::bind(&CorridorNav::button_cmd_handle,this,std::placeholders::_1,std::placeholders::_2)
+            );
 
         }
-
-    public:
-
-        void publish_cmd_vel();
-
-        void corridor_est_discrete_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
-
-        void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
-
-        void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
-
-        void state_machine_driving();
 
     };
 }

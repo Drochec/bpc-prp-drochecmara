@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "camera_node.hpp"
-#include "corridor_bang.hpp"
+#include "corridor_nav.hpp"
 #include "RosExampleClass.h"
 #include "helper.hpp"
 #include "imu_node.hpp"
@@ -30,11 +30,11 @@ int main(int argc, char* argv[]) {
     auto camera_node = std::make_shared<nodes::CameraNode>();
     //auto joy_node = std::make_shared<nodes::JoyNode>();
     //auto bangbang_node = std::make_shared<loops::BangBang>();
-    auto corridorbang_node = std::make_shared<loops::CorridorBang>();
+    auto CorridorNav_node = std::make_shared<loops::CorridorNav>();
     //auto pid_node = std::make_shared<loops::PidNode>();
     
     //Setup ROS and spin nodes
-    //executor->add_node(io_node);
+    executor->add_node(io_node);
     executor->add_node(motor_node);
     executor->add_node(line_node);
     executor->add_node(imu_node);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     executor->add_node(camera_node);
     //executor->add_node(joy_node);
     //executor->add_node(bangbang_node);
-    executor->add_node(corridorbang_node);
+    executor->add_node(CorridorNav_node);
     //executor->add_node(pid_node);
 
     executor->spin();

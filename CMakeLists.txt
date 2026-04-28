@@ -36,7 +36,7 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/line_loop_pid.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/lidar_node.cpp
-        ${CMAKE_SOURCE_DIR}/src/loops/corridor_bang.cpp
+        ${CMAKE_SOURCE_DIR}/src/loops/corridor_nav.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/camera_node.cpp
 
 )
