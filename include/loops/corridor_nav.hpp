@@ -45,6 +45,8 @@ namespace loops {
         bool exiting_corridor_;
 
         corridor_state state_;
+        corridor_state last_state_;
+
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_centering_;
 
@@ -93,6 +95,7 @@ namespace loops {
                         set_yaw_(0),
                         exiting_corridor_(false),
                         state_(corridor_state::WAIT),
+                        last_state_(corridor_state::RESET),
                         pid_yaw_(3,0.3,0),
                         pid_centering_(10,0,1)
         {

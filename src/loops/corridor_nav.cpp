@@ -9,8 +9,11 @@ namespace loops {
 
 
     void CorridorNav::state_machine() {
-        RCLCPP_INFO(get_logger(), "State: %u",  static_cast<unsigned int>(state_));
-
+        
+        if (state_ != last_state_) {
+            RCLCPP_INFO(get_logger(), "State: %u",  static_cast<unsigned int>(state_));
+            last_state_ = state_;
+        }
 
         auto error_lidar = lidar_vals_.left - lidar_vals_.right;
         //float error_lidar = (lidar_vals_.left - lidar_vals_.right) / (lidar_vals_.left + lidar_vals_.right);
