@@ -86,10 +86,10 @@ namespace loops {
                     error_walls_ = 0;
                 }
 
-                cmd_vel_.w = pid_walls_.step(error_walls_,10e-3);
-                auto plant_msg = std_msgs::msg::Float32();
-                plant_msg.data = -error_walls_;
-                publisher_plant_out_->publish(plant_msg);
+                //cmd_vel_.w = pid_walls_.step(error_walls_,10e-3);
+
+                cmd_vel_.w = K * error_walls_;
+                
                 //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
 
                 // Keep centered using P/PID based on side distances

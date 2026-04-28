@@ -30,13 +30,12 @@ namespace loops {
         float yaw_estimate_;
         corridor_state state_;
         algorithms::Pid pid_yaw_;
-        algorithms::Pid pid_walls_;
+        //algorithms::Pid pid_walls_;
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
-        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_plant_out_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
@@ -49,7 +48,7 @@ namespace loops {
                         yaw_estimate_(0),
                         state_(corridor_state::CORRIDOR_FOLLOWING),
                         pid_yaw_(5,0.2,0,0),
-                        pid_walls_(25,1.5,0,10*10e-3),
+                        //pid_walls_(25,1.5,0,10*10e-3),
                         error_walls_(0)
         {
 
@@ -72,7 +71,6 @@ namespace loops {
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
-            publisher_plant_out_ = create_publisher<std_msgs::msg::Float32>("plant_out",5);
 
             publish_timer_ = create_wall_timer(5ms, std::bind(&CorridorBang::publish_cmd_vel,this));
 
