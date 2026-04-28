@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(prp_project)
+project(prp_project_t2)
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
@@ -15,36 +15,26 @@ find_package(OpenCV REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-#Potreba pro services
-find_package(rosidl_default_generators REQUIRED)
-
-rosidl_generate_interfaces(${PROJECT_NAME} 
-        "srv/ButtonCmd.srv"
-        "srv/CalibrateTrigger.srv"
-        "srv/ResetYawTrigger.srv"
-)
-
-set (EXEC_NAME main)
 
 set(SRC
-        ${CMAKE_SOURCE_DIR}/src/nodes/io_node.cpp
+        #${CMAKE_SOURCE_DIR}/src/nodes/io_node.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/motor.cpp
-        ${CMAKE_SOURCE_DIR}/src/nodes/line.cpp
-        ${CMAKE_SOURCE_DIR}/src/nodes/imu_node.cpp
-        ${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
+        #${CMAKE_SOURCE_DIR}/src/nodes/line.cpp
+        #${CMAKE_SOURCE_DIR}/src/nodes/imu_node.cpp
+        #${CMAKE_SOURCE_DIR}/src/loops/line_loop_bang.cpp
         ${CMAKE_SOURCE_DIR}/src/algorithms/kinematics.cpp
-        ${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
-        ${CMAKE_SOURCE_DIR}/src/loops/line_loop_pid.cpp
+        #${CMAKE_SOURCE_DIR}/src/nodes/gamepad_node.cpp
+        #${CMAKE_SOURCE_DIR}/src/loops/line_loop_pid.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/lidar_node.cpp
-        ${CMAKE_SOURCE_DIR}/src/loops/corridor_nav.cpp
-        ${CMAKE_SOURCE_DIR}/src/nodes/camera_node.cpp
+        ${CMAKE_SOURCE_DIR}/src/loops/corridor_bang.cpp
+        #${CMAKE_SOURCE_DIR}/src/nodes/camera_node.cpp
 
 )
 
 set(AMENT_LIBS rclcpp std_msgs sensor_msgs cv_bridge image_transport)
 
-add_executable(${EXEC_NAME} src/main.cpp ${SRC})
-target_include_directories(${EXEC_NAME} PUBLIC
+add_executable(${PROJECT_NAME} src/main.cpp ${SRC})
+target_include_directories(${PROJECT_NAME} PUBLIC
         include
         include/nodes
         include/algorithms
@@ -53,14 +43,10 @@ target_include_directories(${EXEC_NAME} PUBLIC
         ${SDL2_INCLUDE_DIRS}
         /opt/ros/humble/include
 )
-target_link_libraries(${EXEC_NAME}  ${OpenCV_LIBS} SDL2)
-ament_target_dependencies(${EXEC_NAME}  rclcpp std_msgs sensor_msgs cv_bridge image_transport visualization_msgs)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} SDL2)
+ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs sensor_msgs cv_bridge image_transport visualization_msgs)
 
-rosidl_target_interfaces(${EXEC_NAME} 
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
-install(TARGETS ${EXEC_NAME}  DESTINATION lib/${PROJECT_NAME})
-
+install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 ament_package()
 
 add_subdirectory(tests)

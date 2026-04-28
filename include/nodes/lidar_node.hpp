@@ -51,7 +51,7 @@ namespace nodes {
                 10,
                 std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
 
-            timer_ = create_wall_timer(25ms,std::bind(&LidarNode::publish,this));
+            timer_ = create_wall_timer(5ms,std::bind(&LidarNode::publish,this));
         }
 
         void publish();
