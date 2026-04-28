@@ -2,7 +2,7 @@
 
 namespace nodes {
 
-    constexpr double imu_dt = 20e-3;
+    //constexpr double imu_dt = 20e-3;
 
     void ImuNode::on_imu_msg(const sensor_msgs::msg::Imu::SharedPtr msg) {
 
@@ -11,11 +11,17 @@ namespace nodes {
         if (mode_ == ImuNodeMode::CALIBRATE) {
             gyro_calibration_samples_.push_back(gyro_z);
         }
-        //TODO: Calculate dt from header stamp
-        //auto dt = msg->header.stamp.nanosec;
 
         else {
-            planar_integrator_.update(gyro_z,imu_dt);
+            auto sec = msg->header.stamp.sec;
+            auto nanosec = msg->header.stamp.nanosec;
+
+            auto dt = (sec - last_sec_) + (nanosec - last_nanosec_) * 1e-9;
+            
+            planar_integrator_.update(gyro_z,dt);
+
+            last_sec_ = sec;
+            last_nanosec_ = nanosec;
         }
 
     }

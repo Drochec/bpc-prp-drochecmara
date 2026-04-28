@@ -23,6 +23,8 @@ namespace nodes {
     class ImuNode : public rclcpp::Node {
     private:
         ImuNodeMode mode_;
+        int32_t last_sec_;
+        int32_t last_nanosec_;
 
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_;
@@ -47,7 +49,7 @@ namespace nodes {
         std::shared_ptr<prp_project::srv::CalibrateTrigger::Response> response);
 
     public:
-        ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE) {
+        ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
 
             imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
                 Topic::imu,

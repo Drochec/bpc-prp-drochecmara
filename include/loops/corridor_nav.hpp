@@ -88,7 +88,7 @@ namespace loops {
 
     public:
 
-        CorridorNav() : rclcpp::Node("bang_bang"),
+        CorridorNav() : rclcpp::Node("corridor_nav"),
                         cmd_vel_({0,0}),
                         lidar_vals_({0,0,0,0}),
                         yaw_estimate_(0),
