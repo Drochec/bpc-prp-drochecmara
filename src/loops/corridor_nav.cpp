@@ -7,6 +7,11 @@
 
 namespace loops {
 
+    static float normalize_angle(float angle) {
+        while (angle > M_PI) angle -= 2.0f * M_PI;
+        while (angle <= -M_PI) angle += 2.0f * M_PI;
+        return angle;
+    }
 
     void CorridorNav::state_machine() {
         
@@ -17,7 +22,7 @@ namespace loops {
 
         auto error_lidar = lidar_vals_.left - lidar_vals_.right;
         //float error_lidar = (lidar_vals_.left - lidar_vals_.right) / (lidar_vals_.left + lidar_vals_.right);
-        auto error_yaw = set_yaw_ - yaw_estimate_;
+        auto error_yaw = normalize_angle(set_yaw_ - yaw_estimate_);
 
         switch (state_) {
 
@@ -33,20 +38,17 @@ namespace loops {
             case corridor_state::CORRIDOR_FOLLOWING:
 
 
-                //Dead-end check
+                // Intersection detection: require a blocked front and an open side.
+                const bool front_blocked = lidar_vals_.front <= wall_threshold;
+                const bool side_open = lidar_vals_.left > wall_threshold || lidar_vals_.right > wall_threshold;
 
-                if (lidar_vals_.left > wall_threshold || lidar_vals_.right > wall_threshold) {
+                if (front_blocked && side_open) {
+                    cmd_vel_ = {0, 0};
+                    state_ = corridor_state::INTERSECTION;
+                    break;
+                }
 
-                    if (lidar_vals_.front < wall_threshold) {
-                        if (lidar_vals_.front <= front_stop) {
-                            cmd_vel_ = {0, 0};
-                            //Check volny smer
-                            state_ = corridor_state::INTERSECTION;
-                            //pid_yaw_.reset();
-                            break;
-                        }
-                    }
-
+                if (lidar_vals_.front <= front_stop) {
                     cmd_vel_ = {0, 0};
                     state_ = corridor_state::INTERSECTION;
                     break;
@@ -134,14 +136,14 @@ namespace loops {
 
             case corridor_state::TURNING:
                 // Use IMU to track rotation
-                // Rotate until yaw changes by ±90°
-                // Then return to CORRIDOR_FOLLOWING
+                // Rotate in place until yaw changes by ±90°
+                // Then return to EXIT_INTERSECTION
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
                 cmd_vel_.w = pid_yaw_.step(error_yaw);
-                cmd_vel_.v = 0.2;
+                cmd_vel_.v = 0.0;
 
-                if (abs(error_yaw) <= 0.1) {
+                if (std::abs(error_yaw) <= 0.1) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
