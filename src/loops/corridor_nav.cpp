@@ -15,13 +15,15 @@ namespace loops {
 
     static float encoder_distance_m(const algorithms::Encoders &start,
                                    const algorithms::Encoders &current) {
-        int32_t delta_l = int32_t(current.l - start.l);
-        if (delta_l > INT32_MAX) delta_l -= uint32_t(INT32_MAX) * 2u + 2u;
-        else if (delta_l < INT32_MIN) delta_l += uint32_t(INT32_MAX) * 2u + 2u;
+        int64_t raw_l = int64_t(current.l) - int64_t(start.l);
+        if (raw_l > INT32_MAX) raw_l -= 4294967296ll;
+        else if (raw_l < INT32_MIN) raw_l += 4294967296ll;
+        int32_t delta_l = static_cast<int32_t>(raw_l);
 
-        int32_t delta_r = int32_t(current.r - start.r);
-        if (delta_r > INT32_MAX) delta_r -= uint32_t(INT32_MAX) * 2u + 2u;
-        else if (delta_r < INT32_MIN) delta_r += uint32_t(INT32_MAX) * 2u + 2u;
+        int64_t raw_r = int64_t(current.r) - int64_t(start.r);
+        if (raw_r > INT32_MAX) raw_r -= 4294967296ll;
+        else if (raw_r < INT32_MIN) raw_r += 4294967296ll;
+        int32_t delta_r = static_cast<int32_t>(raw_r);
 
         float d_L = float(delta_l) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
         float d_R = float(delta_r) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
