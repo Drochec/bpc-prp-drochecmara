@@ -85,7 +85,7 @@ namespace loops {
                 cmd_vel_.v = forward_speed_corridor;
                 //cmd_vel_.v = 1.765 * lidar_vals_.front - 0.265;
 
-                cmd_vel_.w = pid_yaw_.step(error_yaw);
+                cmd_vel_.w = pid_yaw_.step(error_yaw,20e-3);
 
 
                 //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
@@ -182,7 +182,7 @@ namespace loops {
                 // Then return to EXIT_INTERSECTION
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
-                cmd_vel_.w = pid_yaw_.step(error_yaw);
+                cmd_vel_.w = pid_yaw_.step(error_yaw, 20e-3);
                 cmd_vel_.v = 0.0;
 
                 if (std::abs(error_yaw) <= 0.1) {
