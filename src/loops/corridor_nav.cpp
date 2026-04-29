@@ -13,6 +13,21 @@ namespace loops {
         return angle;
     }
 
+    static float encoder_distance_m(const algorithms::Encoders &start,
+                                   const algorithms::Encoders &current) {
+        int32_t delta_l = int32_t(current.l - start.l);
+        if (delta_l > INT32_MAX) delta_l -= uint32_t(INT32_MAX) * 2u + 2u;
+        else if (delta_l < INT32_MIN) delta_l += uint32_t(INT32_MAX) * 2u + 2u;
+
+        int32_t delta_r = int32_t(current.r - start.r);
+        if (delta_r > INT32_MAX) delta_r -= uint32_t(INT32_MAX) * 2u + 2u;
+        else if (delta_r < INT32_MIN) delta_r += uint32_t(INT32_MAX) * 2u + 2u;
+
+        float d_L = float(delta_l) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
+        float d_R = float(delta_r) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
+        return (d_L + d_R) * 0.5f;
+    }
+
     void CorridorNav::state_machine() {
         
         if (state_ != last_state_) {
@@ -23,6 +38,8 @@ namespace loops {
         auto error_lidar = lidar_vals_.left - lidar_vals_.right;
         //float error_lidar = (lidar_vals_.left - lidar_vals_.right) / (lidar_vals_.left + lidar_vals_.right);
         auto error_yaw = normalize_angle(set_yaw_ - yaw_estimate_);
+        bool side_open = false;
+        bool front_blocked = false;
 
         switch (state_) {
 
@@ -39,12 +56,16 @@ namespace loops {
 
 
                 // Intersection detection: require a blocked front and an open side.
-                const bool front_blocked = lidar_vals_.front <= wall_threshold;
-                const bool side_open = lidar_vals_.left > wall_threshold || lidar_vals_.right > wall_threshold;
+                front_blocked = lidar_vals_.front <= wall_threshold;
+                side_open = lidar_vals_.left > wall_threshold || lidar_vals_.right > wall_threshold;
 
                 if (front_blocked && side_open) {
-                    cmd_vel_ = {0, 0};
-                    state_ = corridor_state::INTERSECTION;
+                    intersection_start_encoders_ = current_encoders_;
+                    intersection_turn_direction_ = lidar_vals_.left > wall_threshold ? +1 : -1;
+                    pid_yaw_.reset();
+                    cmd_vel_.v = forward_speed_corridor;
+                    cmd_vel_.w = 0.0;
+                    state_ = corridor_state::INTERSECTION_APPROACH;
                     break;
                 }
 
@@ -95,21 +116,40 @@ namespace loops {
 
                 break;
 
+            case corridor_state::INTERSECTION_APPROACH:
+                if (!encoders_ready_) {
+                    state_ = corridor_state::INTERSECTION;
+                    break;
+                }
+
+                if (lidar_vals_.front <= front_stop) {
+                    state_ = corridor_state::INTERSECTION;
+                    break;
+                }
+
+                if (encoder_distance_m(intersection_start_encoders_, current_encoders_) >=
+                    intersection_delay_distance) {
+                    cmd_vel_ = {0.0, 0.0};
+                    state_ = corridor_state::INTERSECTION;
+                    break;
+                }
+
+                cmd_vel_.v = forward_speed_corridor;
+                cmd_vel_.w = 0.0;
+                break;
+
             case corridor_state::INTERSECTION:
-                //turn left
-                if (lidar_vals_.left > wall_threshold) {
+                if (intersection_turn_direction_ > 0) {
                     set_yaw_ = yaw_estimate_ + M_PI/2;
                 }
-                //turn right
-                else if(lidar_vals_.right > wall_threshold) {
+                else if (intersection_turn_direction_ < 0) {
                     set_yaw_ = yaw_estimate_ - M_PI/2;
                 }
                 else if (lidar_vals_.front > wall_threshold) {
                     exiting_corridor_ = true;
-                    //TODO pomocou flag vypnut kontrolu stien,vytiahnut si z motorov hodnoty encoderov a vypnut flag, ked prejdeme 40 s robotom
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
+                    break;
                 }
-                //turn back
                 else {
                     set_yaw_ = yaw_estimate_ + M_PI;
                 }
@@ -229,6 +269,13 @@ namespace loops {
     void CorridorNav::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
 
         yaw_estimate_ = msg->data;
+    }
+
+    void CorridorNav::encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+        if (msg->data.size() >= 2) {
+            current_encoders_ = {msg->data[0], msg->data[1]};
+            encoders_ready_ = true;
+        }
     }
 
     void CorridorNav::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
