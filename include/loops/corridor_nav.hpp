@@ -37,9 +37,13 @@ namespace loops {
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
     constexpr float exit_centering_error = 0.05;
+<<<<<<< Updated upstream
     constexpr float intersection_delay_distance = 0.15;
     constexpr float encoder_wheel_radius = 68.55e-3f;
     constexpr int encoder_ticks_per_revolution = 585;
+=======
+    constexpr float intersection_advance_distance = 0.1;  // 10cm in meters
+>>>>>>> Stashed changes
     
 
     class CorridorNav : public rclcpp::Node {
@@ -56,16 +60,21 @@ namespace loops {
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_centering_;
 
+<<<<<<< Updated upstream
         algorithms::Encoders current_encoders_;
         algorithms::Encoders intersection_start_encoders_;
         bool encoders_ready_;
         int intersection_turn_direction_;
+=======
+        algorithms::Kinematics kinematics_;
+>>>>>>> Stashed changes
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_distance_traveled_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
@@ -112,10 +121,14 @@ namespace loops {
                         last_state_(corridor_state::RESET),
                         pid_yaw_(3,0.3,0),
                         pid_centering_(10,0,1),
+<<<<<<< Updated upstream
                         current_encoders_({0,0}),
                         intersection_start_encoders_({0,0}),
                         encoders_ready_(false),
                         intersection_turn_direction_(0)
+=======
+                        kinematics_(68.55e-3, 130.00e-3, 585)
+>>>>>>> Stashed changes
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
@@ -143,6 +156,8 @@ namespace loops {
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
+            
+            publisher_distance_traveled_ = create_publisher<std_msgs::msg::Float32>("/bpc_prp_robot/distance_traveled_intersection", 5);
 
             publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 

@@ -44,5 +44,6 @@ namespace algorithms {
         WheelSpeed inverse(RobotSpeed x) const;
         Coordinates forward(Encoders x) const;
         Encoders inverse(Coordinates x) const;
+        float calculate_distance_traveled(const Encoders& start_encoders, const Encoders& current_encoders) const;
     };
 }

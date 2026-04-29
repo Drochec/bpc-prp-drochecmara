@@ -7,28 +7,24 @@
 
 namespace loops {
 
-    static float normalize_angle(float angle) {
-        while (angle > M_PI) angle -= 2.0f * M_PI;
-        while (angle <= -M_PI) angle += 2.0f * M_PI;
-        return angle;
+    float calculate_distance_from_encoders(
+        const algorithms::Encoders& start_encoders,
+        const algorithms::Encoders& current_encoders
+    ) {
+        // Calculate delta in ticks for each wheel
+        uint32_t delta_left = current_encoders.l - start_encoders.l;
+        uint32_t delta_right = current_encoders.r - start_encoders.r;
+        
+        // Average of both wheels
+        double avg_delta_ticks = (delta_left + delta_right) / 2.0;
+        
+        // Convert ticks to distance: (ticks / TPR) * circumference
+        // circumference = 2 * pi * radius
+        float distance = (avg_delta_ticks / TPR) * 2.0 * M_PI * WHEEL_RADIUS;
+        
+        return distance;
     }
 
-    static float encoder_distance_m(const algorithms::Encoders &start,
-                                   const algorithms::Encoders &current) {
-        int64_t raw_l = int64_t(current.l) - int64_t(start.l);
-        if (raw_l > INT32_MAX) raw_l -= 4294967296ll;
-        else if (raw_l < INT32_MIN) raw_l += 4294967296ll;
-        int32_t delta_l = static_cast<int32_t>(raw_l);
-
-        int64_t raw_r = int64_t(current.r) - int64_t(start.r);
-        if (raw_r > INT32_MAX) raw_r -= 4294967296ll;
-        else if (raw_r < INT32_MIN) raw_r += 4294967296ll;
-        int32_t delta_r = static_cast<int32_t>(raw_r);
-
-        float d_L = float(delta_l) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
-        float d_R = float(delta_r) * M_PI * loops::encoder_wheel_radius / loops::encoder_ticks_per_revolution;
-        return (d_L + d_R) * 0.5f;
-    }
 
     void CorridorNav::state_machine() {
         
@@ -157,7 +153,29 @@ namespace loops {
                 }
 
                 pid_yaw_.reset();
-                state_ = corridor_state::TURNING;
+                state_ = corridor_state::INTERSECTION_ADVANCE;
+                break;
+
+            case corridor_state::INTERSECTION_ADVANCE:
+                // Move forward while tracking distance via encoders
+                cmd_vel_.v = forward_speed_corridor;
+                cmd_vel_.w = 0.0;  // Go straight, no rotation
+                
+                // Calculate distance traveled since intersection detection
+                distance_traveled_at_intersection_ = calculate_distance_from_encoders(
+                    encoders_at_intersection_start_,
+                    encoders_
+                );
+                
+                // Once 15cm traveled, proceed to turn based on decision made above
+                if (distance_traveled_at_intersection_ >= intersection_advance_distance) {
+                    cmd_vel_ = {0.0, 0};
+                    state_ = next_turn_direction_state_;
+                    
+                    if (next_turn_direction_state_ == corridor_state::TURNING) {
+                        pid_yaw_.reset();
+                    }
+                }
                 break;
 
             case corridor_state::EXIT_INTERSECTION:
