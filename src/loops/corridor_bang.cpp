@@ -38,7 +38,7 @@ namespace loops {
         }
     }
 
-    float K = 5;
+    
     double set_yaw = 0;
 
     void CorridorBang::state_machine_driving() {

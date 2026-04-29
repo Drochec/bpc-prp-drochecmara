@@ -20,8 +20,15 @@ namespace loops {
         CORRIDOR_FOLLOWING,
         TURNING,
     };
-
+    // Straight + Circle
+    /*
     constexpr float forward_speed_corridor = 0.2;
+    constexpr float K = 5;
+    */
+
+    // 8 - way
+    constexpr float forward_speed_corridor = 0.1;
+    constexpr float K = 2;
 
     class CorridorBang : public rclcpp::Node {
 
