@@ -5,7 +5,29 @@
 #include "imu_node.hpp"
 #include "lidar_node.hpp"
 
+// Constants for encoder distance calculation
+constexpr double WHEEL_RADIUS = 68.55e-3;  // meters
+constexpr int TPR = 585;  // Ticks per revolution
+
 namespace loops {
+
+    float calculate_distance_from_encoders(
+        const algorithms::Encoders& start_encoders,
+        const algorithms::Encoders& current_encoders
+    ) {
+        // Calculate delta in ticks for each wheel
+        uint32_t delta_left = current_encoders.l - start_encoders.l;
+        uint32_t delta_right = current_encoders.r - start_encoders.r;
+        
+        // Average of both wheels
+        double avg_delta_ticks = (delta_left + delta_right) / 2.0;
+        
+        // Convert ticks to distance: (ticks / TPR) * circumference
+        // circumference = 2 * pi * radius
+        float distance = (avg_delta_ticks / TPR) * 2.0 * M_PI * WHEEL_RADIUS;
+        
+        return distance;
+    }
 
 
     void CorridorNav::state_machine() {
@@ -94,26 +116,56 @@ namespace loops {
                 break;
 
             case corridor_state::INTERSECTION:
+                // Store sensor readings for turn direction decision
                 //turn left
                 if (lidar_vals_.left > wall_threshold) {
+                    next_turn_direction_state_ = corridor_state::TURNING;
                     set_yaw_ = yaw_estimate_ + M_PI/2;
                 }
                 //turn right
                 else if(lidar_vals_.right > wall_threshold) {
+                    next_turn_direction_state_ = corridor_state::TURNING;
                     set_yaw_ = yaw_estimate_ - M_PI/2;
                 }
                 else if (lidar_vals_.front > wall_threshold) {
                     exiting_corridor_ = true;
-                    //TODO pomocou flag vypnut kontrolu stien,vytiahnut si z motorov hodnoty encoderov a vypnut flag, ked prejdeme 40 s robotom
-                    state_ = corridor_state::CORRIDOR_FOLLOWING;
+                    next_turn_direction_state_ = corridor_state::CORRIDOR_FOLLOWING;
                 }
                 //turn back
                 else {
+                    next_turn_direction_state_ = corridor_state::TURNING;
                     set_yaw_ = yaw_estimate_ + M_PI;
                 }
 
+                // Save encoder position and reset distance tracker
+                encoders_at_intersection_start_ = encoders_;
+                distance_traveled_at_intersection_ = 0.0f;
+                
+                // Transition to advance state to move 15cm before committing to turn
                 pid_yaw_.reset();
-                state_ = corridor_state::TURNING;
+                state_ = corridor_state::INTERSECTION_ADVANCE;
+                break;
+
+            case corridor_state::INTERSECTION_ADVANCE:
+                // Move forward while tracking distance via encoders
+                cmd_vel_.v = forward_speed_corridor;
+                cmd_vel_.w = 0.0;  // Go straight, no rotation
+                
+                // Calculate distance traveled since intersection detection
+                distance_traveled_at_intersection_ = calculate_distance_from_encoders(
+                    encoders_at_intersection_start_,
+                    encoders_
+                );
+                
+                // Once 15cm traveled, proceed to turn based on decision made above
+                if (distance_traveled_at_intersection_ >= intersection_advance_distance) {
+                    cmd_vel_ = {0.0, 0};
+                    state_ = next_turn_direction_state_;
+                    
+                    if (next_turn_direction_state_ == corridor_state::TURNING) {
+                        pid_yaw_.reset();
+                    }
+                }
                 break;
 
             case corridor_state::EXIT_INTERSECTION:
@@ -234,6 +286,11 @@ namespace loops {
             cmd_vel_ = {0, 0};
             state_ = corridor_state::CALIBRATION;
         }
+    }
+    
+    void CorridorNav::encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+        encoders_.l = msg->data[0];
+        encoders_.r = msg->data[1];
     }
 
 }

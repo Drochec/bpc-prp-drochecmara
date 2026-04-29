@@ -11,6 +11,7 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/detail/float32__struct.hpp>
+#include <std_msgs/msg/u_int32_multi_array.hpp>
 #include "pid.hpp"
 #include "prp_project/srv/calibrate_trigger.hpp"
 #include "prp_project/srv/reset_yaw_trigger.hpp"
@@ -25,6 +26,7 @@ namespace loops {
         CORRIDOR_FOLLOWING,
         CENTERING,
         INTERSECTION,
+        INTERSECTION_ADVANCE,
         EXIT_INTERSECTION,
         TURNING,
         RESET,
@@ -34,6 +36,7 @@ namespace loops {
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
     constexpr float exit_centering_error = 0.05;
+    constexpr float intersection_advance_distance = 0.15;  // 15cm in meters
     
 
     class CorridorNav : public rclcpp::Node {
@@ -43,6 +46,11 @@ namespace loops {
         float yaw_estimate_;
         float set_yaw_;
         bool exiting_corridor_;
+        
+        algorithms::Encoders encoders_;
+        algorithms::Encoders encoders_at_intersection_start_;
+        float distance_traveled_at_intersection_;
+        corridor_state next_turn_direction_state_;
 
         corridor_state state_;
         corridor_state last_state_;
@@ -53,6 +61,7 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
+        rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
@@ -74,6 +83,8 @@ namespace loops {
         void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
 
         void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
+        
+        void encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
 
         void state_machine();
 
@@ -94,6 +105,10 @@ namespace loops {
                         yaw_estimate_(0),
                         set_yaw_(0),
                         exiting_corridor_(false),
+                        encoders_({0, 0}),
+                        encoders_at_intersection_start_({0, 0}),
+                        distance_traveled_at_intersection_(0),
+                        next_turn_direction_state_(corridor_state::TURNING),
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
                         pid_yaw_(3,0.3,0),
@@ -116,6 +131,12 @@ namespace loops {
                 Topic::machine_state,
                 15,
                 std::bind(&CorridorNav::set_state_callback,this, std::placeholders::_1)
+            );
+            
+            subscriber_encoders_ = create_subscription<std_msgs::msg::UInt32MultiArray>(
+                Topic::encoders,
+                15,
+                std::bind(&CorridorNav::encoder_callback,this, std::placeholders::_1)
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
