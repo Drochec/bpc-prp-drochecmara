@@ -28,17 +28,21 @@ namespace nodes {
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_cmd_vel_;
         // Publisher
         rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_encoder_distance_;
         rclcpp::TimerBase::SharedPtr timer_;
 
         algorithms::Kinematics kinematics_; //Treba instace jelikoz Kinematics funkce nejsou static - mozna predelat?
         algorithms::RobotSpeed cmd_vel_; //Nastavena rychlost
-        algorithms::Encoders encoders_; //Prectene hodnoty enkoderu
+        algorithms::Encoders encoders_ {0, 0}; //Prectene hodnoty enkoderu
+        algorithms::Encoders encoders_prev_ {0, 0};
+        float encoder_distance_total_ = 0.0f;
 
     public:
         // Constructor
         MotorNode() : rclcpp::Node("Motor_node"), kinematics_(wheel_radius,wheel_base,TPR)
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds, 10);
+            publisher_encoder_distance_ = this->create_publisher<std_msgs::msg::Float32>(Topic::encoder_distance, 10);
 
             subscriber_ = this->create_subscription<std_msgs::msg::UInt32MultiArray>(
                             Topic::encoders,

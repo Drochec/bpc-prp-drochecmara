@@ -152,6 +152,16 @@ namespace loops {
                     set_yaw_ = yaw_estimate_ + M_PI;
                 }
 
+<<<<<<< Updated upstream
+=======
+                // Save encoder position and reset distance tracker
+                encoders_at_intersection_start_ = encoders_;
+                distance_traveled_at_intersection_ = 0.0f;
+                // Save published encoder distance as baseline as well
+                encoder_distance_at_intersection_start_ = encoder_distance_total_;
+                
+                // Transition to advance state to move 15cm before committing to turn
+>>>>>>> Stashed changes
                 pid_yaw_.reset();
                 state_ = corridor_state::INTERSECTION_ADVANCE;
                 break;
@@ -161,12 +171,17 @@ namespace loops {
                 cmd_vel_.v = forward_speed_corridor;
                 cmd_vel_.w = 0.0;  // Go straight, no rotation
                 
-                // Calculate distance traveled since intersection detection
-                distance_traveled_at_intersection_ = calculate_distance_from_encoders(
-                    encoders_at_intersection_start_,
-                    encoders_
-                );
-                
+                // Calculate distance traveled since intersection detection using published encoder distance
+                distance_traveled_at_intersection_ = encoder_distance_total_ - encoder_distance_at_intersection_start_;
+
+                // Fallback to encoder ticks calculation if published encoder distance not available (<=0)
+                if (distance_traveled_at_intersection_ <= 0.0f) {
+                    distance_traveled_at_intersection_ = calculate_distance_from_encoders(
+                        encoders_at_intersection_start_,
+                        encoders_
+                    );
+                }
+
                 // Once 15cm traveled, proceed to turn based on decision made above
                 if (distance_traveled_at_intersection_ >= intersection_advance_distance) {
                     cmd_vel_ = {0.0, 0};
@@ -303,6 +318,10 @@ namespace loops {
             cmd_vel_ = {0, 0};
             state_ = corridor_state::CALIBRATION;
         }
+    }
+
+    void CorridorNav::encoder_distance_callback(std_msgs::msg::Float32::SharedPtr msg) {
+        encoder_distance_total_ = msg->data;
     }
 
 }

@@ -72,9 +72,16 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
+<<<<<<< Updated upstream
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
+=======
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_encoder_distance_;
+>>>>>>> Stashed changes
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_distance_traveled_;
+
+        float encoder_distance_total_ = 0.0f;
+        float encoder_distance_at_intersection_start_ = 0.0f;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
@@ -153,6 +160,12 @@ namespace loops {
                 Topic::encoders,
                 15,
                 std::bind(&CorridorNav::encoders_callback,this, std::placeholders::_1)
+            );
+
+            subscriber_encoder_distance_ = create_subscription<std_msgs::msg::Float32>(
+                Topic::encoder_distance,
+                15,
+                std::bind(&CorridorNav::encoder_distance_callback,this,std::placeholders::_1)
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);

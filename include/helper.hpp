@@ -14,6 +14,7 @@ namespace Topic {
     const std::string set_motor_speeds = "/bpc_prp_robot/set_motor_speeds";
     const std::string cmd_vel = "/bpc_prp_robot/cmd_vel";
     const std::string encoders = "/bpc_prp_robot/encoders";
+    const std::string encoder_distance = "/bpc_prp_robot/encoder_distance";
     //Line
     const std::string line = "/bpc_prp_robot/line_sensors";
     const std::string line_estimate_discrete = "/bpc_prp_robot/line_estimate_discrete";
