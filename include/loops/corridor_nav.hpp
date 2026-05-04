@@ -28,6 +28,7 @@ namespace loops {
         CENTERING,
         INTERSECTION_APPROACH,
         INTERSECTION,
+        INTERSECTION_ADVANCE,
         EXIT_INTERSECTION,
         TURNING,
         RESET,
@@ -37,14 +38,9 @@ namespace loops {
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
     constexpr float exit_centering_error = 0.05;
-<<<<<<< Updated upstream
-    constexpr float intersection_delay_distance = 0.15;
+    constexpr float intersection_advance_distance = 0.12;  // 12cm in meters
     constexpr float encoder_wheel_radius = 68.55e-3f;
     constexpr int encoder_ticks_per_revolution = 585;
-=======
-    constexpr float intersection_advance_distance = 0.1;  // 10cm in meters
->>>>>>> Stashed changes
-    
 
     class CorridorNav : public rclcpp::Node {
 
@@ -56,44 +52,39 @@ namespace loops {
 
         corridor_state state_;
         corridor_state last_state_;
+        corridor_state next_turn_direction_state_;
 
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_centering_;
 
-<<<<<<< Updated upstream
+        // Encoder data received from subscribers
         algorithms::Encoders current_encoders_;
-        algorithms::Encoders intersection_start_encoders_;
-        bool encoders_ready_;
+        algorithms::Encoders encoders_at_intersection_start_;
         int intersection_turn_direction_;
-=======
-        algorithms::Kinematics kinematics_;
->>>>>>> Stashed changes
+        bool encoders_ready_;
 
+        // Distance tracking
+        float encoder_distance_total_ = 0.0f;
+        float encoder_distance_at_intersection_start_ = 0.0f;
+        float distance_traveled_at_intersection_ = 0.0f;
+
+        // Subscribers
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
-<<<<<<< Updated upstream
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
-=======
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_encoder_distance_;
->>>>>>> Stashed changes
+
+        // Publishers
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_distance_traveled_;
-
-        float encoder_distance_total_ = 0.0f;
-        float encoder_distance_at_intersection_start_ = 0.0f;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
 
-
         rclcpp::Service<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_service_;
-
         rclcpp::Client<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
         rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
-
-
-
 
         void publish_cmd_vel();
 
@@ -104,6 +95,8 @@ namespace loops {
         void encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
 
         void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
+
+        void encoder_distance_callback(std_msgs::msg::Float32::SharedPtr msg);
 
         void state_machine();
 
@@ -126,16 +119,13 @@ namespace loops {
                         exiting_corridor_(false),
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
+                        next_turn_direction_state_(corridor_state::TURNING),
                         pid_yaw_(3,0.3,0),
                         pid_centering_(10,0,1),
-<<<<<<< Updated upstream
                         current_encoders_({0,0}),
-                        intersection_start_encoders_({0,0}),
-                        encoders_ready_(false),
-                        intersection_turn_direction_(0)
-=======
-                        kinematics_(68.55e-3, 130.00e-3, 585)
->>>>>>> Stashed changes
+                        encoders_at_intersection_start_({0,0}),
+                        intersection_turn_direction_(0),
+                        encoders_ready_(false)
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
