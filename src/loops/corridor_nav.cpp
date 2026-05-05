@@ -40,7 +40,6 @@ namespace loops {
         }
 
         auto error_lidar = lidar_vals_.left - lidar_vals_.right;
-        //float error_lidar = (lidar_vals_.left - lidar_vals_.right) / (lidar_vals_.left + lidar_vals_.right);
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
         switch (state_) {
@@ -58,7 +57,7 @@ namespace loops {
 
 
                 //Intersection check - Wall infront or Line detected
-                if ((lidar_vals_.front < wall_threshold) || line_detection_ > 0) {
+                if ((lidar_vals_.front < front_stop) || (line_detection_ > 0)) {
                         cmd_vel_ = {0, 0};
                         state_ = corridor_state::INTERSECTION;
                         break;
@@ -77,11 +76,13 @@ namespace loops {
                     cmd_vel_ = {0, 0};
                     state_ = corridor_state::INTERSECTION;
                     break;
-                }
-                /*else if (lidar_vals_.left < 0.15 || lidar_vals_.right < 0.15) {
-                    state_ = corridor_state::CENTERING;
-                    break;
                 }*/
+
+                else if (lidar_vals_.left < 0.15 || lidar_vals_.right < 0.15) {
+                    state_ = corridor_state::CENTERING;
+                    RCLCPP_INFO(get_logger(),"Centering using lidar");
+                    break;
+                }
                 
                 //Corridor following
                 cmd_vel_.v = forward_speed_corridor;
@@ -91,14 +92,16 @@ namespace loops {
 
             case corridor_state::CENTERING:
                 // Safety: if we lose walls → bail out
+                /*
                 if (!(lidar_vals_.left < wall_threshold &&
                       lidar_vals_.right < wall_threshold)) {
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                     break;
-                      }
-
+                    }
+                */
                 // Aggressive controller
                 cmd_vel_.w = pid_centering_.step(error_lidar, dt);
+                RCLCPP_INFO(get_logger(), "Error center: %lf",  error_lidar);
 
                 // Slow forward motion (important!)
                 cmd_vel_.v = 0.15;
@@ -139,8 +142,9 @@ namespace loops {
 
                 //turn back
                 else {
-                    next_turn_direction_state_ = corridor_state::TURNING;
+                    state_ = corridor_state::TURNING;
                     set_yaw_ = yaw_estimate_ + M_PI;
+                    pid_yaw_turn_.reset();
                     RCLCPP_INFO(get_logger(),"Dead-end, turning back");
                     break;
                 }
@@ -150,7 +154,7 @@ namespace loops {
                 distance_traveled_at_intersection_ = 0.0f;
                 
                 // Transition to advance state to move 15cm before committing to turn
-                pid_yaw_.reset();
+                //pid_yaw_.reset();
                 state_ = corridor_state::INTERSECTION_ADVANCE;
                 RCLCPP_INFO(get_logger(),"Entering intersection");
                 break;
@@ -169,7 +173,7 @@ namespace loops {
                 // Once 15cm traveled, proceed to turn based on decision made above
                 if (distance_traveled_at_intersection_ >= intersection_advance_distance) {
                     cmd_vel_ = {0.0, 0};
-
+                    pid_yaw_turn_.reset();
                     state_ = corridor_state::TURNING;
                     
                 }
@@ -197,10 +201,10 @@ namespace loops {
                 // Then return to CORRIDOR_FOLLOWING
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
-                cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
+                cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if (abs(error_yaw) <= 0.1) {
+                if (abs(error_yaw) <= 0.01) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();

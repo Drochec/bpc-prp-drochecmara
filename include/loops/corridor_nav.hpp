@@ -36,7 +36,7 @@ namespace loops {
     constexpr float forward_speed_corridor = 0.075;
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
-    constexpr float exit_centering_error = 0.05;
+    constexpr float exit_centering_error = 0.01;
     constexpr float intersection_advance_distance = 0.15;  // 15cm in meters
     
 
@@ -58,6 +58,7 @@ namespace loops {
         corridor_state last_state_;
 
         algorithms::Pid pid_yaw_;
+        algorithms::Pid pid_yaw_turn_;
         algorithms::Pid pid_centering_;
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
@@ -115,8 +116,9 @@ namespace loops {
                         next_turn_direction_state_(corridor_state::TURNING),
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
-                        pid_yaw_(3,0.3,0),
-                        pid_centering_(10,0,1)
+                        pid_yaw_(3,0.1,0.1),
+                        pid_yaw_turn_(2.5,0.2,0),
+                        pid_centering_(10,0,0,3*20*1e-3) //thau = 3*dt
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
