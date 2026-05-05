@@ -1,8 +1,27 @@
 #include "nodes/motor.hpp"
+
+#include <cmath>
 #include <cstdint>
+#include <cstdlib>
 
 namespace nodes {
     int i = 0;
+
+    namespace {
+        int64_t calculate_encoder_delta(uint32_t previous, uint32_t current) {
+            constexpr int64_t encoder_wrap = int64_t{1} << 32;
+            constexpr int64_t half_encoder_wrap = int64_t{1} << 31;
+
+            int64_t delta = static_cast<int64_t>(current) - static_cast<int64_t>(previous);
+            if (delta > half_encoder_wrap) {
+                delta -= encoder_wrap;
+            } else if (delta < -half_encoder_wrap) {
+                delta += encoder_wrap;
+            }
+
+            return delta;
+        }
+    }
 
     void MotorNode::set_speed_callback() {
         auto msg = std_msgs::msg::UInt8MultiArray();
@@ -20,19 +39,26 @@ namespace nodes {
     }
 
     void MotorNode::encoder_callback(const std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
-        // Compute distance increment from previous encoder readings and publish total distance
+        if (msg->data.size() < 2) {
+            RCLCPP_WARN(this->get_logger(), "Encoder message has %zu values, expected at least 2", msg->data.size());
+            return;
+        }
+
         uint32_t new_l = msg->data[0];
         uint32_t new_r = msg->data[1];
 
-        uint32_t delta_l = new_l - encoders_.l;
-        uint32_t delta_r = new_r - encoders_.r;
+        if (encoders_initialized_) {
+            int64_t delta_l = calculate_encoder_delta(encoders_.l, new_l);
+            int64_t delta_r = calculate_encoder_delta(encoders_.r, new_r);
 
-        double avg_delta_ticks = (static_cast<double>(delta_l) + static_cast<double>(delta_r)) / 2.0;
+            double meters_per_tick = (2.0 * M_PI * wheel_radius) / static_cast<double>(TPR);
+            double distance_l = std::abs(delta_l) * meters_per_tick;
+            double distance_r = std::abs(delta_r) * meters_per_tick;
 
-        // Convert ticks to distance: (ticks / TPR) * circumference
-        double distance = (avg_delta_ticks / static_cast<double>(TPR)) * 2.0 * M_PI * wheel_radius;
-
-        encoder_distance_total_ += static_cast<float>(distance);
+            encoder_distance_total_ += static_cast<float>((distance_l + distance_r) / 2.0);
+        } else {
+            encoders_initialized_ = true;
+        }
 
         // Update stored encoder readings
         encoders_.l = new_l;

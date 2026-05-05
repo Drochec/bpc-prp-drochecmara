@@ -1,0 +1,121 @@
+[  1%] Built target prp_project__cpp
+Consolidate compiler generated dependencies of target gtest_main
+[  4%] Built target gtest_main
+Consolidate compiler generated dependencies of target gtest
+[  7%] Built target gtest
+Consolidate compiler generated dependencies of target prp_project__rosidl_typesupport_cpp
+[ 14%] Built target prp_project__rosidl_typesupport_cpp
+Consolidate compiler generated dependencies of target prp_project__rosidl_typesupport_fastrtps_cpp
+[ 22%] Built target prp_project__rosidl_typesupport_fastrtps_cpp
+Consolidate compiler generated dependencies of target prp_project__rosidl_typesupport_introspection_cpp
+[ 29%] Built target prp_project__rosidl_typesupport_introspection_cpp
+Consolidate compiler generated dependencies of target t_kinematics
+[ 31%] Building CXX object tests/CMakeFiles/t_kinematics.dir/__/src/algorithms/kinematics.cpp.o
+[ 32%] Linking CXX executable t_kinematics
+[ 34%] Built target t_kinematics
+[ 34%] Built target ament_cmake_python_copy_prp_project
+[ 35%] Generating C code for ROS interfaces
+[ 37%] Building C object CMakeFiles/prp_project__rosidl_generator_c.dir/rosidl_generator_c/prp_project/srv/detail/button_cmd__functions.c.o
+[ 38%] Building C object CMakeFiles/prp_project__rosidl_generator_c.dir/rosidl_generator_c/prp_project/srv/detail/reset_yaw_trigger__functions.c.o
+[ 40%] Building C object CMakeFiles/prp_project__rosidl_generator_c.dir/rosidl_generator_c/prp_project/srv/detail/calibrate_trigger__functions.c.o
+[ 41%] Linking C shared library libprp_project__rosidl_generator_c.so
+[ 41%] Built target prp_project__rosidl_generator_c
+running egg_info
+creating prp_project.egg-info
+writing prp_project.egg-info/PKG-INFO
+writing dependency_links to prp_project.egg-info/dependency_links.txt
+writing top-level names to prp_project.egg-info/top_level.txt
+writing manifest file 'prp_project.egg-info/SOURCES.txt'
+reading manifest file 'prp_project.egg-info/SOURCES.txt'
+writing manifest file 'prp_project.egg-info/SOURCES.txt'
+[ 41%] Built target ament_cmake_python_build_prp_project_egg
+[ 43%] Generating C type support dispatch for ROS interfaces
+[ 44%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_c.dir/rosidl_typesupport_c/prp_project/srv/button_cmd__type_support.cpp.o
+[ 46%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_c.dir/rosidl_typesupport_c/prp_project/srv/calibrate_trigger__type_support.cpp.o
+[ 47%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_c.dir/rosidl_typesupport_c/prp_project/srv/reset_yaw_trigger__type_support.cpp.o
+[ 49%] Linking CXX shared library libprp_project__rosidl_typesupport_c.so
+[ 49%] Built target prp_project__rosidl_typesupport_c
+[ 50%] Generating C introspection for ROS interfaces
+[ 52%] Building C object CMakeFiles/prp_project__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/prp_project/srv/detail/button_cmd__type_support.c.o
+[ 53%] Building C object CMakeFiles/prp_project__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/prp_project/srv/detail/reset_yaw_trigger__type_support.c.o
+[ 55%] Building C object CMakeFiles/prp_project__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/prp_project/srv/detail/calibrate_trigger__type_support.c.o
+[ 56%] Linking C shared library libprp_project__rosidl_typesupport_introspection_c.so
+[ 56%] Built target prp_project__rosidl_typesupport_introspection_c
+[ 58%] Generating C type support for eProsima Fast-RTPS
+[ 59%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/prp_project/srv/detail/button_cmd__type_support_c.cpp.o
+[ 61%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/prp_project/srv/detail/reset_yaw_trigger__type_support_c.cpp.o
+[ 62%] Building CXX object CMakeFiles/prp_project__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/prp_project/srv/detail/calibrate_trigger__type_support_c.cpp.o
+[ 64%] Linking CXX shared library libprp_project__rosidl_typesupport_fastrtps_c.so
+[ 64%] Built target prp_project__rosidl_typesupport_fastrtps_c
+[ 64%] Built target prp_project
+[ 65%] Generating Python code for ROS interfaces
+[ 65%] Built target prp_project__py
+[ 67%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o
+[ 68%] Building CXX object CMakeFiles/main.dir/src/nodes/motor.cpp.o
+[ 70%] Building CXX object CMakeFiles/main.dir/src/nodes/line.cpp.o
+[ 71%] Building CXX object CMakeFiles/main.dir/src/nodes/imu_node.cpp.o
+[ 73%] Building CXX object CMakeFiles/main.dir/src/loops/line_loop_bang.cpp.o
+[ 74%] Building CXX object CMakeFiles/main.dir/src/algorithms/kinematics.cpp.o
+[ 76%] Building CXX object CMakeFiles/main.dir/src/nodes/gamepad_node.cpp.o
+[ 77%] Building CXX object CMakeFiles/main.dir/src/loops/line_loop_pid.cpp.o
+[ 79%] Building CXX object CMakeFiles/main.dir/src/nodes/lidar_node.cpp.o
+[ 80%] Building CXX object CMakeFiles/main.dir/src/loops/corridor_nav.cpp.o
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp: In member function ‘void loops::CorridorNav::state_machine()’:
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:37:26: error: ‘normalize_angle’ was not declared in this scope
+   37 |         auto error_yaw = normalize_angle(set_yaw_ - yaw_estimate_);
+      |                          ^~~~~~~~~~~~~~~
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:58:21: error: ‘intersection_start_encoders_’ was not declared in this scope
+   58 |                     intersection_start_encoders_ = current_encoders_;
+      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:88:49: error: no matching function for call to ‘algorithms::Pid::step(float&)’
+   88 |                 cmd_vel_.w = pid_centering_.step(error_lidar);
+      |                              ~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+In file included from /home/marek/bpc-prp-drochecmara/include/loops/corridor_nav.hpp:16,
+                 from /home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:1:
+/home/marek/bpc-prp-drochecmara/include/algorithms/pid.hpp:18:16: note: candidate: ‘double algorithms::Pid::step(double, double)’
+   18 |         double step(double error,double dt) {
+      |                ^~~~
+/home/marek/bpc-prp-drochecmara/include/algorithms/pid.hpp:18:16: note:   candidate expects 2 arguments, 1 provided
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:98:21: error: ‘statestop’ was not declared in this scope
+   98 |                     statestop) {
+      |                     ^~~~~~~~~
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:103:54: error: ‘intersection_start_encoders_’ was not declared in this scope
+  103 |                 if (calculate_distance_from_encoders(intersection_start_encoders_, current_encoders_) >= 0.15) {
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:209:45: error: qualified-id in declaration before ‘(’ token
+  209 |     void CorridorNav::send_calibrate_trigger(){
+      |                                             ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:214:37: error: qualified-id in declaration before ‘(’ token
+  214 |     void CorridorNav::send_reset_yaw(){
+      |                                     ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:219:40: error: qualified-id in declaration before ‘(’ token
+  219 |     void CorridorNav::button_cmd_handle(
+      |                                        ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:244:38: error: qualified-id in declaration before ‘(’ token
+  244 |     void CorridorNav::publish_cmd_vel(){
+      |                                      ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:250:41: error: qualified-id in declaration before ‘(’ token
+  250 |     void CorridorNav::range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+      |                                         ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:254:39: error: qualified-id in declaration before ‘(’ token
+  254 |     void CorridorNav::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
+      |                                       ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:258:40: error: qualified-id in declaration before ‘(’ token
+  258 |     void CorridorNav::encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+      |                                        ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:265:41: error: qualified-id in declaration before ‘(’ token
+  265 |     void CorridorNav::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
+      |                                         ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:272:48: error: qualified-id in declaration before ‘(’ token
+  272 |     void CorridorNav::encoder_distance_callback(std_msgs::msg::Float32::SharedPtr msg) {
+      |                                                ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp: At global scope:
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:276:2: error: expected ‘}’ at end of input
+  276 | }
+      |  ^
+/home/marek/bpc-prp-drochecmara/src/loops/corridor_nav.cpp:8:17: note: to match this ‘{’
+    8 | namespace loops {
+      |                 ^
+gmake[2]: *** [CMakeFiles/main.dir/build.make:216: CMakeFiles/main.dir/src/loops/corridor_nav.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:630: CMakeFiles/main.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

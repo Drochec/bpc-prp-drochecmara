@@ -6,6 +6,7 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int32_multi_array.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <helper.hpp>
 
@@ -34,8 +35,8 @@ namespace nodes {
         algorithms::Kinematics kinematics_; //Treba instace jelikoz Kinematics funkce nejsou static - mozna predelat?
         algorithms::RobotSpeed cmd_vel_; //Nastavena rychlost
         algorithms::Encoders encoders_ {0, 0}; //Prectene hodnoty enkoderu
-        algorithms::Encoders encoders_prev_ {0, 0};
         float encoder_distance_total_ = 0.0f;
+        bool encoders_initialized_ = false;
 
     public:
         // Constructor

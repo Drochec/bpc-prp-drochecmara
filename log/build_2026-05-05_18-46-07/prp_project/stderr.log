@@ -1,0 +1,16 @@
+CMake Deprecation Warning at /opt/ros/humble/share/rosidl_cmake/cmake/rosidl_target_interfaces.cmake:32 (message):
+  Use rosidl_get_typesupport_target() and target_link_libraries() instead of
+  rosidl_target_interfaces()
+Call Stack (most recent call first):
+  CMakeLists.txt:59 (rosidl_target_interfaces)
+
+
+/home/marek/bpc-prp-drochecmara/src/algorithms/kinematics.cpp:106:6: error: expected ‘}’ at end of input
+  106 |     }
+      |      ^
+/home/marek/bpc-prp-drochecmara/src/algorithms/kinematics.cpp:5:22: note: to match this ‘{’
+    5 | namespace algorithms {
+      |                      ^
+gmake[2]: *** [tests/CMakeFiles/t_kinematics.dir/build.make:90: tests/CMakeFiles/t_kinematics.dir/__/src/algorithms/kinematics.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:683: tests/CMakeFiles/t_kinematics.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

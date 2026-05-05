@@ -104,3 +104,4 @@ namespace algorithms {
         float distance = (d_R + d_L) / 2.0f;
         return distance;
     }
+}
