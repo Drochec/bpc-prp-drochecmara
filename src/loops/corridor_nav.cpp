@@ -64,9 +64,7 @@ namespace loops {
                     if (lidar_vals_.front < wall_threshold) {
                         if (lidar_vals_.front <= front_stop) {
                             cmd_vel_ = {0, 0};
-                            //Check volny smer
                             state_ = corridor_state::INTERSECTION;
-                            //pid_yaw_.reset();
                             break;
                         }
                     }

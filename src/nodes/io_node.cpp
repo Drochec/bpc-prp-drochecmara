@@ -43,23 +43,23 @@ namespace nodes {
 
         auto btn_state = get_button_pressed();
         if (btn_state == 2) {
-            msg.data = {255, 0, 0,
-            255, 0, 0,
-            255, 0, 0,
-            255, 0, 0};
+            msg.data = {127, 0, 0,
+            127, 0, 0,
+            127, 0, 0,
+            127, 0, 0};
         }
         else if (btn_state == 1) {
-            msg.data = {0, 255, 0,
-            0, 255, 0,
-            0, 255, 0,
-            0, 255, 0};
+            msg.data = {0, 127, 0,
+            0, 127, 0,
+            0, 127, 0,
+            0, 127, 0};
         }
-        /*else if (btn_state == 0) {
-            msg.data = {0, 0, 255,
-            0, 0, 255,
-            0, 0, 255,
-            0, 0, 255};
-        }*/
+        else if (btn_state == 0) {
+            msg.data = {0, 0, 0,
+            0, 0, 0,
+            0, 0, 0,
+            0, 0, 0};
+        }
 
         publisher_->publish(msg);
         //RCLCPP_INFO(this->get_logger(), "Sending LED data");
