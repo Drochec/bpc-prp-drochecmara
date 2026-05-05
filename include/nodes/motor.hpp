@@ -36,7 +36,7 @@ namespace nodes {
 
     public:
         // Constructor
-        MotorNode() : rclcpp::Node("Motor_node"), kinematics_(wheel_radius,wheel_base,TPR)
+        MotorNode() : rclcpp::Node("motor_node"), kinematics_(wheel_radius,wheel_base,TPR)
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds, 10);
 
