@@ -6,7 +6,6 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int32_multi_array.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
-#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <helper.hpp>
 
@@ -20,6 +19,7 @@ namespace nodes {
     double constexpr wheel_radius = 68.55e-3; //m
     double constexpr wheel_base = 130.00e-3; //m
     int constexpr TPR = 585; //Ticks per revolution
+    float traveled_dist = 0.0f; //m
 
     class MotorNode : public rclcpp::Node {
     private:
@@ -35,8 +35,8 @@ namespace nodes {
         algorithms::Kinematics kinematics_; //Treba instace jelikoz Kinematics funkce nejsou static - mozna predelat?
         algorithms::RobotSpeed cmd_vel_; //Nastavena rychlost
         algorithms::Encoders encoders_ {0, 0}; //Prectene hodnoty enkoderu
+        algorithms::Encoders encoders_prev_ {0, 0};
         float encoder_distance_total_ = 0.0f;
-        bool encoders_initialized_ = false;
 
     public:
         // Constructor
