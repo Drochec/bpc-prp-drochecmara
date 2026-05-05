@@ -9,21 +9,21 @@ namespace Topic {
     //IO
     const std::string buttons = "/bpc_prp_robot/buttons";
     const std::string set_rgb_leds = "/bpc_prp_robot/rgb_leds";
-    const std::string machine_state = "/bpc_prp_robot/machine_state";
+    //const std::string machine_state = "/bpc_prp_robot/machine_state";
     //Motors
     const std::string set_motor_speeds = "/bpc_prp_robot/set_motor_speeds";
-    const std::string cmd_vel = "/bpc_prp_robot/cmd_vel";
+    const std::string cmd_vel = "/controller/cmd_vel";
     const std::string encoders = "/bpc_prp_robot/encoders";
     //Line
     const std::string line = "/bpc_prp_robot/line_sensors";
-    const std::string line_estimate_discrete = "/bpc_prp_robot/line_estimate_discrete";
-    const std::string line_estimate = "/bpc_prp_robot/line_estimate";
+    const std::string line_estimate_discrete = "/controller/line_estimate_discrete";
+    const std::string line_estimate = "/controller/line_estimate";
     //Lidar
     const std::string lidar = "/bpc_prp_robot/lidar";
-    const std::string range_estimate = "/bpc_prp_robot/range_estimate";
+    const std::string range_estimate = "/controller/range_estimate";
     //IMU
     const std::string imu = "/bpc_prp_robot/imu";
-    const std::string yaw_estimate = "/bpc_prp_robot/yaw_estimate";
+    const std::string yaw_estimate = "/controller/yaw_estimate";
     //Camera
     const std::string camera = "/bpc_prp_robot/camera/compressed";
 

@@ -60,7 +60,6 @@ namespace loops {
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
-        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
@@ -127,12 +126,6 @@ namespace loops {
                 std::bind(&CorridorNav::yaw_est_callback,this, std::placeholders::_1)
             );
 
-            subscriber_state_ = create_subscription<std_msgs::msg::UInt8>(
-                Topic::machine_state,
-                15,
-                std::bind(&CorridorNav::set_state_callback,this, std::placeholders::_1)
-            );
-            
             subscriber_encoders_ = create_subscription<std_msgs::msg::UInt32MultiArray>(
                 Topic::encoders,
                 15,
@@ -141,9 +134,9 @@ namespace loops {
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
 
-            publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorNav::publish_cmd_vel,this));
+            publish_timer_ = create_wall_timer(15ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 
-            decision_timer_ = create_wall_timer(30ms, std::bind(&CorridorNav::state_machine,this));
+            decision_timer_ = create_wall_timer(20ms, std::bind(&CorridorNav::state_machine,this));
 
             calibrate_client_ = create_client<prp_project::srv::CalibrateTrigger>("calibrate");
             reset_yaw_client_ = create_client<prp_project::srv::ResetYawTrigger>("reset_yaw");

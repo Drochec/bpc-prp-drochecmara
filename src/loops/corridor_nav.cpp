@@ -9,6 +9,8 @@
 constexpr double WHEEL_RADIUS = 68.55e-3;  // meters
 constexpr int TPR = 585;  // Ticks per revolution
 
+constexpr float dt = 20e-3; //20ms between calls
+
 namespace loops {
 
     float calculate_distance_from_encoders(
@@ -82,7 +84,7 @@ namespace loops {
                 cmd_vel_.v = forward_speed_corridor;
                 //cmd_vel_.v = 1.765 * lidar_vals_.front - 0.265;
 
-                cmd_vel_.w = pid_yaw_.step(error_yaw);
+                cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
 
 
                 //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
@@ -100,7 +102,7 @@ namespace loops {
                       }
 
                 // Aggressive controller
-                cmd_vel_.w = pid_centering_.step(error_lidar);
+                cmd_vel_.w = pid_centering_.step(error_lidar, dt);
 
                 // Slow forward motion (important!)
                 cmd_vel_.v = 0.15;
@@ -190,7 +192,7 @@ namespace loops {
                 // Then return to CORRIDOR_FOLLOWING
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
-                cmd_vel_.w = pid_yaw_.step(error_yaw);
+                cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
                 cmd_vel_.v = 0.2;
 
                 if (abs(error_yaw) <= 0.1) {
@@ -281,12 +283,6 @@ namespace loops {
         yaw_estimate_ = msg->data;
     }
 
-    void CorridorNav::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
-        if (msg->data == 0) {
-            cmd_vel_ = {0, 0};
-            state_ = corridor_state::CALIBRATION;
-        }
-    }
     
     void CorridorNav::encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
         encoders_.l = msg->data[0];
