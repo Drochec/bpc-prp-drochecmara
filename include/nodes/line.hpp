@@ -13,9 +13,9 @@
 
 // Public API sketch; adapt to your project
 enum class DiscreteLinePose {
+    LineNone,
     LineOnLeft,
     LineOnRight,
-    LineNone,
     LineBoth,
 };
 

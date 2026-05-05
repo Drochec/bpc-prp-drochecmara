@@ -14,7 +14,7 @@ namespace nodes {
         sensor_vals_.left = sensor_left_norm;
         sensor_vals_.right = sensor_right_norm;
 
-        RCLCPP_INFO(this->get_logger(), "Received, left: %f, right: %f", sensor_vals_.left, sensor_vals_.right);
+        //RCLCPP_INFO(this->get_logger(), "Received, left: %f, right: %f", sensor_vals_.left, sensor_vals_.right);
         //RCLCPP_INFO(this->get_logger(), "Received raw, left: %u, right: %u", sensor_vals_raw_.left, sensor_vals_raw_.right);
         //auto estimated_discrete_pos = algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
         //auto estimated_line_pos = algorithms::LineEstimator::estimate_continuous_line_pose(sensor_vals_);

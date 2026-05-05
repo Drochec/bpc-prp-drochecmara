@@ -57,8 +57,13 @@ namespace loops {
             case corridor_state::CORRIDOR_FOLLOWING:
 
 
-                //Dead-end check
-
+                //Intersection check - Wall infront or Line detected
+                if ((lidar_vals_.front < wall_threshold) || line_detection_ > 0) {
+                        cmd_vel_ = {0, 0};
+                        state_ = corridor_state::INTERSECTION;
+                        break;
+                    }
+                /*
                 if (lidar_vals_.left > wall_threshold || lidar_vals_.right > wall_threshold) {
 
                     if (lidar_vals_.front < wall_threshold) {
@@ -77,18 +82,11 @@ namespace loops {
                     state_ = corridor_state::CENTERING;
                     break;
                 }*/
-
+                
                 //Corridor following
                 cmd_vel_.v = forward_speed_corridor;
-                //cmd_vel_.v = 1.765 * lidar_vals_.front - 0.265;
-
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
 
-
-                //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
-
-                // Keep centered using P/PID based on side distances
-                // If front is blocked and one side is open → switch to TURNING
                 break;
 
             case corridor_state::CENTERING:
@@ -116,25 +114,35 @@ namespace loops {
                 break;
 
             case corridor_state::INTERSECTION:
-                // Store sensor readings for turn direction decision
-                //turn left
-                if (lidar_vals_.left > wall_threshold) {
-                    next_turn_direction_state_ = corridor_state::TURNING;
-                    set_yaw_ = yaw_estimate_ + M_PI/2;
-                }
-                //turn right
-                else if(lidar_vals_.right > wall_threshold) {
-                    next_turn_direction_state_ = corridor_state::TURNING;
+
+                // Check intersections for availible paths
+                RCLCPP_INFO(get_logger(),"Checking for intersections");
+
+                //If left or right, need to enter the intersection 
+                // Turn right
+                if(lidar_vals_.right > wall_threshold) {
                     set_yaw_ = yaw_estimate_ - M_PI/2;
+                    RCLCPP_INFO(get_logger(),"Going right");
                 }
+                //turn left
+                else if (lidar_vals_.left > wall_threshold) {
+                    set_yaw_ = yaw_estimate_ + M_PI/2;
+                    RCLCPP_INFO(get_logger(),"Going left");
+                }
+
+                // Not inside a corridor, go back to following 
                 else if (lidar_vals_.front > wall_threshold) {
-                    exiting_corridor_ = true;
-                    next_turn_direction_state_ = corridor_state::CORRIDOR_FOLLOWING;
+                    state_ = corridor_state::CORRIDOR_FOLLOWING;
+                    RCLCPP_INFO(get_logger(),"None detected");
+                    break;
                 }
+
                 //turn back
                 else {
                     next_turn_direction_state_ = corridor_state::TURNING;
                     set_yaw_ = yaw_estimate_ + M_PI;
+                    RCLCPP_INFO(get_logger(),"Dead-end, turning back");
+                    break;
                 }
 
                 // Save encoder position and reset distance tracker
@@ -144,6 +152,7 @@ namespace loops {
                 // Transition to advance state to move 15cm before committing to turn
                 pid_yaw_.reset();
                 state_ = corridor_state::INTERSECTION_ADVANCE;
+                RCLCPP_INFO(get_logger(),"Entering intersection");
                 break;
 
             case corridor_state::INTERSECTION_ADVANCE:
@@ -160,11 +169,9 @@ namespace loops {
                 // Once 15cm traveled, proceed to turn based on decision made above
                 if (distance_traveled_at_intersection_ >= intersection_advance_distance) {
                     cmd_vel_ = {0.0, 0};
-                    state_ = next_turn_direction_state_;
+
+                    state_ = corridor_state::TURNING;
                     
-                    if (next_turn_direction_state_ == corridor_state::TURNING) {
-                        pid_yaw_.reset();
-                    }
                 }
                 break;
 
@@ -191,7 +198,7 @@ namespace loops {
 
                 RCLCPP_INFO(get_logger(), "Error yaw: %lf",  error_yaw);
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
-                cmd_vel_.v = 0.2;
+                
 
                 if (abs(error_yaw) <= 0.1) {
 
@@ -285,6 +292,10 @@ namespace loops {
     void CorridorNav::encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
         encoders_.l = msg->data[0];
         encoders_.r = msg->data[1];
+    }
+
+    void CorridorNav::line_callback(std_msgs::msg::UInt8::SharedPtr msg) {
+        line_detection_ = msg->data;
     }
 
 }

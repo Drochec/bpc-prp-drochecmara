@@ -16,6 +16,7 @@
 #include "prp_project/srv/calibrate_trigger.hpp"
 #include "prp_project/srv/reset_yaw_trigger.hpp"
 #include "prp_project/srv/button_cmd.hpp"
+#include "line.hpp"
 
 using namespace std::chrono_literals;
 
@@ -46,6 +47,7 @@ namespace loops {
         float yaw_estimate_;
         float set_yaw_;
         bool exiting_corridor_;
+        uint8_t line_detection_;
         
         algorithms::Encoders encoders_;
         algorithms::Encoders encoders_at_intersection_start_;
@@ -61,6 +63,7 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
@@ -80,6 +83,8 @@ namespace loops {
         void range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
 
         void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
+
+        void line_callback(std_msgs::msg::UInt8::SharedPtr msg);
 
         void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
         
@@ -130,6 +135,12 @@ namespace loops {
                 Topic::encoders,
                 15,
                 std::bind(&CorridorNav::encoder_callback,this, std::placeholders::_1)
+            );
+
+            subscriber_line_ = create_subscription<std_msgs::msg::UInt8>(
+                Topic::line_estimate_discrete,
+                5,
+                std::bind(&CorridorNav::line_callback, this, std::placeholders::_1)
             );
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
