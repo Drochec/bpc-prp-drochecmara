@@ -1,6 +1,17 @@
 #include "lidar_node.hpp"
 
 namespace nodes {
+    LidarNode::LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
+        publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate, 10);
+
+        subscriber_ = create_subscription<sensor_msgs::msg::LaserScan>(
+            Topic::lidar,
+            10,
+            std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
+
+        timer_ = create_wall_timer(25ms, std::bind(&LidarNode::publish, this));
+    }
+
     void LidarNode::subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg) {
 
         auto angle_start = msg->angle_min;
