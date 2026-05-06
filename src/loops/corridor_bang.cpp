@@ -31,13 +31,6 @@ namespace loops {
         yaw_estimate_ = msg->data;
     }
 
-    void CorridorBang::set_state_callback(std_msgs::msg::UInt8::SharedPtr msg) {
-        if (msg->data == 0) {
-            cmd_vel_ = {0, 0};
-            state_ = corridor_state::CALIBRATION;
-        }
-    }
-
     
     double set_yaw = 0;
 
@@ -86,9 +79,9 @@ namespace loops {
                     error_walls_ = 0;
                 }
 
-                //cmd_vel_.w = pid_walls_.step(error_walls_,10e-3);
+                cmd_vel_.w = pid_walls_.step(error_walls_,20e-3);
 
-                cmd_vel_.w = K * error_walls_;
+                //cmd_vel_.w = K * error_walls_;
                 
                 //RCLCPP_INFO(this->get_logger(),"L: %.3f R: %.3f error: %.3f w: %.3f",lidar_vals_.left, lidar_vals_.right, error, cmd_vel_.w);
 
