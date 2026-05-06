@@ -3,6 +3,7 @@
 #include <helper.hpp>
 #include <string>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <rclcpp/rclcpp.hpp>
 #include "kinematics.hpp"
@@ -62,6 +63,7 @@ namespace loops {
         algorithms::Encoders encoders_at_intersection_start_;
         int intersection_turn_direction_;
         bool encoders_ready_;
+        algorithms::Encoders intersection_start_encoders_;
 
         // Distance tracking
         float encoder_distance_total_ = 0.0f;
@@ -108,6 +110,13 @@ namespace loops {
         void send_calibrate_trigger();
 
         void send_reset_yaw();
+
+        //float normalize_angle(std_msgs::msg::Float32 set, std_msgs::msg::Float32 estimate);
+
+        float normalize_angle(float angle)
+        {
+            return std::atan2(std::sin(angle), std::cos(angle));
+        }
 
     public:
 

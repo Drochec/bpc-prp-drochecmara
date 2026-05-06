@@ -6,6 +6,7 @@
 
 namespace nodes {
     int i = 0;
+    float traveled_dist = 0.0f; //m
 
     namespace {
         int64_t calculate_encoder_delta(uint32_t previous, uint32_t current) {
