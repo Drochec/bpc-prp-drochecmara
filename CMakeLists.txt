@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(prp_project)
+project(prp_project_nav_dev)
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)

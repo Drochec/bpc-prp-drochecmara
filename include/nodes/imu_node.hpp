@@ -6,8 +6,8 @@
 #include "algorithms/planar_imu_integrator.hpp"
 #include "helper.hpp"
 #include <std_msgs/msg/float32.hpp>
-#include "prp_project/srv/calibrate_trigger.hpp"
-#include "prp_project/srv/reset_yaw_trigger.hpp"
+#include "prp_project_nav_dev/srv/calibrate_trigger.hpp"
+#include "prp_project_nav_dev/srv/reset_yaw_trigger.hpp"
 
 //TODO
 //Implement service server
@@ -28,8 +28,8 @@ namespace nodes {
 
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_;
-        rclcpp::Service<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_service_;
-        rclcpp::Service<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_service_;
+        rclcpp::Service<prp_project_nav_dev::srv::ResetYawTrigger>::SharedPtr reset_yaw_service_;
+        rclcpp::Service<prp_project_nav_dev::srv::CalibrateTrigger>::SharedPtr calibrate_service_;
 
         algorithms::PlanarImuIntegrator planar_integrator_;
         rclcpp::TimerBase::SharedPtr timer_;
@@ -42,11 +42,11 @@ namespace nodes {
         void integrate();
         void publish_estimate();
 
-        void reset_yaw_handle(const std::shared_ptr<prp_project::srv::ResetYawTrigger::Request> request,
-        std::shared_ptr<prp_project::srv::ResetYawTrigger::Response> response);
+        void reset_yaw_handle(const std::shared_ptr<prp_project_nav_dev::srv::ResetYawTrigger::Request> request,
+        std::shared_ptr<prp_project_nav_dev::srv::ResetYawTrigger::Response> response);
         void calibrate_handle(
-        const std::shared_ptr<prp_project::srv::CalibrateTrigger::Request> request,
-        std::shared_ptr<prp_project::srv::CalibrateTrigger::Response> response);
+        const std::shared_ptr<prp_project_nav_dev::srv::CalibrateTrigger::Request> request,
+        std::shared_ptr<prp_project_nav_dev::srv::CalibrateTrigger::Response> response);
 
     public:
         ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
@@ -62,12 +62,12 @@ namespace nodes {
             calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
             calib_timer_->cancel();
 
-            reset_yaw_service_ = create_service<prp_project::srv::ResetYawTrigger>(
+            reset_yaw_service_ = create_service<prp_project_nav_dev::srv::ResetYawTrigger>(
                 "reset_yaw",
                 std::bind(&ImuNode::reset_yaw_handle, this, std::placeholders::_1, std::placeholders::_2)
             );
             
-            calibrate_service_ = create_service<prp_project::srv::CalibrateTrigger>(
+            calibrate_service_ = create_service<prp_project_nav_dev::srv::CalibrateTrigger>(
                 "calibrate",
                 std::bind(&ImuNode::calibrate_handle, this, std::placeholders::_1, std::placeholders::_2)
             );

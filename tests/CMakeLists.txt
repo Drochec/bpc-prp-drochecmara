@@ -17,6 +17,7 @@ target_include_directories(t_kinematics PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../include/algorithms
         ${CMAKE_CURRENT_SOURCE_DIR}/../include/nodes
         ${CMAKE_CURRENT_SOURCE_DIR}/../include/loops
+        ${CMAKE_CURRENT_SOURCE_DIR}/../srv
 )
 
 # 3. Link your ROS2 dependencies (needed because t_kinematics includes motor.hpp)

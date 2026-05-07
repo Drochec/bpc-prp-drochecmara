@@ -15,9 +15,9 @@
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/detail/float32__struct.hpp>
 #include "pid.hpp"
-#include "prp_project/srv/calibrate_trigger.hpp"
-#include "prp_project/srv/reset_yaw_trigger.hpp"
-#include "prp_project/srv/button_cmd.hpp"
+#include "prp_project_nav_dev/srv/calibrate_trigger.hpp"
+#include "prp_project_nav_dev/srv/reset_yaw_trigger.hpp"
+#include "prp_project_nav_dev/srv/button_cmd.hpp"
 
 using namespace std::chrono_literals;
 
@@ -38,6 +38,9 @@ namespace loops {
     constexpr float forward_speed_corridor = 0.075;
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
+    constexpr float turn_check_angular_speed = 0.35;
+    constexpr float max_corridor_angular_speed = 1.15;
+    constexpr float max_turn_angular_speed = 1.4;
     constexpr float exit_centering_error = 0.05;
     constexpr float intersection_advance_distance = 0.12;  // 12cm in meters
     constexpr float encoder_wheel_radius = 68.55e-3f;
@@ -84,9 +87,9 @@ namespace loops {
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
 
-        rclcpp::Service<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_service_;
-        rclcpp::Client<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
-        rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
+        rclcpp::Service<prp_project_nav_dev::srv::ButtonCmd>::SharedPtr button_cmd_service_;
+        rclcpp::Client<prp_project_nav_dev::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
+        rclcpp::Client<prp_project_nav_dev::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
 
         void publish_cmd_vel();
 
@@ -102,9 +105,17 @@ namespace loops {
 
         void state_machine();
 
+        bool is_intersection(bool left_open, bool right_open, bool front_open) const;
+
+        bool should_check_turn_context(float corridor_turn_rate, bool left_open, bool right_open, bool front_open) const;
+
+        int choose_turn_direction(bool left_open, bool right_open, bool front_open) const;
+
+        void prepare_intersection_decision(int turn_direction, bool advance_to_center);
+
         void button_cmd_handle(
-            const std::shared_ptr<prp_project::srv::ButtonCmd::Request> request,
-            std::shared_ptr<prp_project::srv::ButtonCmd::Response> response
+            const std::shared_ptr<prp_project_nav_dev::srv::ButtonCmd::Request> request,
+            std::shared_ptr<prp_project_nav_dev::srv::ButtonCmd::Response> response
         );
 
         void send_calibrate_trigger();
@@ -130,7 +141,7 @@ namespace loops {
                         last_state_(corridor_state::RESET),
                         next_turn_direction_state_(corridor_state::TURNING),
                         pid_yaw_(3,0.3,0),
-                        pid_centering_(10,0,1),
+                        pid_centering_(9,0,0.04,0.08),
                         current_encoders_({0,0}),
                         encoders_at_intersection_start_({0,0}),
                         intersection_turn_direction_(0),
@@ -175,10 +186,10 @@ namespace loops {
 
             decision_timer_ = create_wall_timer(30ms, std::bind(&CorridorNav::state_machine,this));
 
-            calibrate_client_ = create_client<prp_project::srv::CalibrateTrigger>("calibrate");
-            reset_yaw_client_ = create_client<prp_project::srv::ResetYawTrigger>("reset_yaw");
+            calibrate_client_ = create_client<prp_project_nav_dev::srv::CalibrateTrigger>("calibrate");
+            reset_yaw_client_ = create_client<prp_project_nav_dev::srv::ResetYawTrigger>("reset_yaw");
 
-            button_cmd_service_ = create_service<prp_project::srv::ButtonCmd>(
+            button_cmd_service_ = create_service<prp_project_nav_dev::srv::ButtonCmd>(
                 "button_cmd",
                 std::bind(&CorridorNav::button_cmd_handle,this,std::placeholders::_1,std::placeholders::_2)
             );

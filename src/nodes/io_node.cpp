@@ -19,7 +19,7 @@ namespace nodes {
     }
 
     void IoNode::send_button_cmd(unsigned int button) {
-        auto request = std::make_shared<prp_project::srv::ButtonCmd::Request>();
+        auto request = std::make_shared<prp_project_nav_dev::srv::ButtonCmd::Request>();
 
         if (button == 1) {
             request->command = "START";

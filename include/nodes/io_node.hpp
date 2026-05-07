@@ -7,7 +7,7 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
 #include <helper.hpp>
-#include "prp_project/srv/button_cmd.hpp"
+#include "prp_project_nav_dev/srv/button_cmd.hpp"
 
 using namespace std::chrono_literals;
 
@@ -21,7 +21,7 @@ namespace nodes {
         rclcpp::TimerBase::SharedPtr timer_;
 
         // Service
-        rclcpp::Client<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_client_;
+        rclcpp::Client<prp_project_nav_dev::srv::ButtonCmd>::SharedPtr button_cmd_client_;
 
 
         // Variable to store the last received button press value
@@ -50,7 +50,7 @@ namespace nodes {
 
             timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::rgb_timer_callback, this));
 
-            button_cmd_client_ = create_client<prp_project::srv::ButtonCmd>("button_cmd");
+            button_cmd_client_ = create_client<prp_project_nav_dev::srv::ButtonCmd>("button_cmd");
         }
 
         // Destructor (default)

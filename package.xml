@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-    <name>prp_project</name>
+    <name>prp_project_nav_dev</name>
     <version>0.0.0</version>
     <description>Solution of PRP project</description>
     <maintainer email="adam.ligocki@vut.cz">Adam Ligocki</maintainer>

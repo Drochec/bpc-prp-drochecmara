@@ -1,9 +1,11 @@
 #include "corridor_nav.hpp"
+#include <algorithm>
 #include <math.h>
 #include <sys/stat.h>
 
 #include "imu_node.hpp"
 #include "lidar_node.hpp"
+
 
 namespace loops {
 
@@ -25,6 +27,52 @@ namespace loops {
         return distance;
     }
 
+    bool CorridorNav::is_intersection(bool left_open, bool right_open, bool front_open) const {
+        const int open_directions = (left_open ? 1 : 0) +
+                                    (right_open ? 1 : 0) +
+                                    (front_open ? 1 : 0);
+        return open_directions >= 2;
+    }
+
+    bool CorridorNav::should_check_turn_context(
+        float corridor_turn_rate,
+        bool left_open,
+        bool right_open,
+        bool front_open
+    ) const {
+        const bool side_open = left_open || right_open;
+        const bool front_blocked = !front_open;
+
+        return front_blocked ||
+               side_open ||
+               std::abs(corridor_turn_rate) >= turn_check_angular_speed;
+    }
+
+    int CorridorNav::choose_turn_direction(bool left_open, bool right_open, bool front_open) const {
+        if (left_open) {
+            return +1;
+        }
+        if (right_open) {
+            return -1;
+        }
+        if (front_open) {
+            return 0;
+        }
+
+        return 0;
+    }
+
+    void CorridorNav::prepare_intersection_decision(int turn_direction, bool advance_to_center) {
+        intersection_turn_direction_ = turn_direction;
+        intersection_start_encoders_ = current_encoders_;
+        pid_yaw_.reset();
+        pid_centering_.reset();
+
+        state_ = advance_to_center
+            ? corridor_state::INTERSECTION_APPROACH
+            : corridor_state::INTERSECTION;
+    }
+
 
     void CorridorNav::state_machine() {
 
@@ -34,19 +82,20 @@ namespace loops {
     }
 
     // --- Sensor errors ---
-    auto error_lidar = lidar_vals_.left - lidar_vals_.right;
-    auto error_yaw = normalize_angle(set_yaw_ - yaw_estimate_);
+    const auto error_lidar = lidar_vals_.left - lidar_vals_.right;
+    const auto error_yaw = normalize_angle(set_yaw_ - yaw_estimate_);
 
     // --- Open direction detection ---
-    bool left_open  = lidar_vals_.left  > wall_threshold;
-    bool right_open = lidar_vals_.right > wall_threshold;
-    bool front_open = lidar_vals_.front > wall_threshold;
-
-    int open_directions = (left_open ? 1 : 0) +
-                          (right_open ? 1 : 0) +
-                          (front_open ? 1 : 0);
+    const bool left_open  = lidar_vals_.left  > wall_threshold;
+    const bool right_open = lidar_vals_.right > wall_threshold;
+    const bool front_open = lidar_vals_.front > wall_threshold;
 
     switch (state_) {
+
+        // ---------------- WAIT ----------------
+        case corridor_state::WAIT:
+            cmd_vel_ = {0.0, 0.0};
+            break;
 
         // ---------------- CALIBRATION ----------------
         case corridor_state::CALIBRATION:
@@ -59,36 +108,32 @@ namespace loops {
         // ---------------- CORRIDOR FOLLOWING ----------------
         case corridor_state::CORRIDOR_FOLLOWING:
 
-            // ✅ NEW: detect ANY intersection (not just front-blocked)
-            if (open_directions >= 2) {
+            cmd_vel_.v = forward_speed_corridor;
+            cmd_vel_.w = std::clamp(
+                static_cast<float>(pid_centering_.step(error_lidar, 30e-3)),
+                -max_corridor_angular_speed,
+                max_corridor_angular_speed
+            );
 
-                intersection_start_encoders_ = current_encoders_;
+            if (should_check_turn_context(cmd_vel_.w, left_open, right_open, front_open)) {
+                const int turn_direction = choose_turn_direction(left_open, right_open, front_open);
 
-                // --- Decide preferred turn ---
-                if (left_open) {
-                    intersection_turn_direction_ = +1;
-                } else if (right_open) {
-                    intersection_turn_direction_ = -1;
-                } else {
-                    intersection_turn_direction_ = 0; // straight
+                if (is_intersection(left_open, right_open, front_open)) {
+                    prepare_intersection_decision(turn_direction, true);
+                    break;
                 }
 
-                pid_yaw_.reset();
-
-                state_ = corridor_state::INTERSECTION_APPROACH;
-                break;
+                if (!front_open && turn_direction != 0) {
+                    prepare_intersection_decision(turn_direction, false);
+                    break;
+                }
             }
 
-            // Safety stop
             if (!front_open && lidar_vals_.front <= front_stop) {
                 cmd_vel_ = {0, 0};
-                state_ = corridor_state::INTERSECTION;
+                pid_centering_.reset();
                 break;
             }
-
-            // Normal corridor following
-            cmd_vel_.v = forward_speed_corridor;
-            cmd_vel_.w = pid_yaw_.step(error_yaw, 20e-3);
             break;
 
         // ---------------- INTERSECTION APPROACH ----------------
@@ -99,7 +144,7 @@ namespace loops {
 
             if (calculate_distance_from_encoders(
                     intersection_start_encoders_,
-                    current_encoders_) >= 0.15) {
+                    current_encoders_) >= intersection_advance_distance) {
 
                 cmd_vel_ = {0.0, 0.0};
                 state_ = corridor_state::INTERSECTION;
@@ -129,12 +174,17 @@ namespace loops {
         case corridor_state::TURNING:
 
             cmd_vel_.v = 0.0;
-            cmd_vel_.w = pid_yaw_.step(error_yaw, 20e-3);
+            cmd_vel_.w = std::clamp(
+                static_cast<float>(pid_yaw_.step(error_yaw, 20e-3)),
+                -max_turn_angular_speed,
+                max_turn_angular_speed
+            );
 
             if (std::abs(error_yaw) < 0.1) {
                 cmd_vel_ = {0.0, 0.0};
                 set_yaw_ = yaw_estimate_;
                 pid_yaw_.reset();
+                pid_centering_.reset();
                 state_ = corridor_state::EXIT_INTERSECTION;
             }
             break;
@@ -149,8 +199,14 @@ namespace loops {
             if (!left_open || !right_open) {
                 set_yaw_ = yaw_estimate_;
                 pid_yaw_.reset();
+                pid_centering_.reset();
                 state_ = corridor_state::CORRIDOR_FOLLOWING;
             }
+            break;
+
+        case corridor_state::CENTERING:
+        case corridor_state::INTERSECTION_ADVANCE:
+            state_ = corridor_state::CORRIDOR_FOLLOWING;
             break;
 
         // ---------------- RESET ----------------
@@ -165,18 +221,18 @@ namespace loops {
 }
 
     void CorridorNav::send_calibrate_trigger(){
-        auto request = std::make_shared<prp_project::srv::CalibrateTrigger::Request>();
+        auto request = std::make_shared<prp_project_nav_dev::srv::CalibrateTrigger::Request>();
         calibrate_client_->async_send_request(request);
     }
     
     void CorridorNav::send_reset_yaw(){
-        auto request = std::make_shared<prp_project::srv::ResetYawTrigger::Request>();
+        auto request = std::make_shared<prp_project_nav_dev::srv::ResetYawTrigger::Request>();
         reset_yaw_client_->async_send_request(request);
     }
 
     void CorridorNav::button_cmd_handle(
-            const std::shared_ptr<prp_project::srv::ButtonCmd::Request> request,
-            std::shared_ptr<prp_project::srv::ButtonCmd::Response> response
+            const std::shared_ptr<prp_project_nav_dev::srv::ButtonCmd::Request> request,
+            std::shared_ptr<prp_project_nav_dev::srv::ButtonCmd::Response> response
         ) {
         
         auto received_state = request->command;

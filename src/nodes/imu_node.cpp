@@ -75,8 +75,8 @@ namespace nodes {
     //Services
 
     void ImuNode::calibrate_handle(
-        const std::shared_ptr<prp_project::srv::CalibrateTrigger::Request> request,
-        std::shared_ptr<prp_project::srv::CalibrateTrigger::Response> response) {
+        const std::shared_ptr<prp_project_nav_dev::srv::CalibrateTrigger::Request> request,
+        std::shared_ptr<prp_project_nav_dev::srv::CalibrateTrigger::Response> response) {
 
         
         (void)request;  // if unused
@@ -93,8 +93,8 @@ namespace nodes {
     }
 
     void ImuNode::reset_yaw_handle(
-        const std::shared_ptr<prp_project::srv::ResetYawTrigger::Request> request,
-        std::shared_ptr<prp_project::srv::ResetYawTrigger::Response> response) {
+        const std::shared_ptr<prp_project_nav_dev::srv::ResetYawTrigger::Request> request,
+        std::shared_ptr<prp_project_nav_dev::srv::ResetYawTrigger::Response> response) {
 
             (void)request;
 
