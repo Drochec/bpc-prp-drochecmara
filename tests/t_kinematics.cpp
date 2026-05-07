@@ -8,10 +8,10 @@
 using namespace algorithms;
 
 constexpr float ERROR = 0.001f;
-constexpr float WHEEL_BASE = nodes::wheel_base;
-constexpr float WHEEL_RADIUS = nodes::wheel_radius;
+constexpr float WHEEL_BASE = 130e-3;
+constexpr float WHEEL_RADIUS = 68.55e-3;
 constexpr float WHEEL_CIRCUMFERENCE = 2 * M_PI * WHEEL_RADIUS;
-constexpr int32_t PULSES_PER_ROTATION = nodes::TPR;
+constexpr int32_t PULSES_PER_ROTATION = 585;
 
 TEST(KinematicsTest, BackwardZeroVelocitySI) {
     constexpr float linear = 0.0f;

@@ -3,6 +3,16 @@
 #include <cmath>
 
 namespace algorithms {
+
+    Kinematics::Kinematics(double wheel_radius, double wheel_base, int ticks_revolution) : 
+        wheel_radius_(wheel_radius),
+        wheel_base_(wheel_base), 
+        TPR_(ticks_revolution),
+        pose_{0.0f, 0.0f, 0.0f},
+        encoders_{0, 0},
+        wheel_speed_{0.0f, 0.0f},
+        robot_speed_{0.0f, 0.0f} {};
+
     RobotSpeed Kinematics::forward(WheelSpeed wheel_speed) const {
 
         float v = (wheel_radius_/2) * (wheel_speed.l + wheel_speed.r);
@@ -20,6 +30,10 @@ namespace algorithms {
     }
 
     Coordinates Kinematics::forward(Encoders encoder_new) const {
+
+        //Convert right encoder (forward movement decrements)
+        encoder_new.r = 4294967296 - encoder_new.r;
+
         // compute signed delta with wraparound
         int32_t delta_l = int32_t(encoder_new.l - encoders_.l);
         if (delta_l > 2147483647) delta_l -= 4294967296;  // wrap backward

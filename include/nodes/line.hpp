@@ -49,21 +49,7 @@ namespace nodes {
         SensorNorm sensor_vals_;
 
     public:
-        LineNode() : rclcpp::Node("line_node") {
-
-            publisher_line_discrete_ = create_publisher<std_msgs::msg::UInt8>(Topic::line_estimate_discrete,10);
-            //publisher_line_ = create_publisher<std_msgs::msg::Float32>(Topic::line_estimate,10);
-
-            subscriber_ = this->create_subscription<std_msgs::msg::UInt16MultiArray>(
-                    Topic::line,
-                    1,
-                    std::bind(&LineNode::on_line_sensors_msg, this, std::placeholders::_1)
-                );
-
-            timer_ = this->create_wall_timer(20ms,std::bind(&LineNode::publish_line_estimate, this));
-            
-        };
-
+        LineNode();
         // Relative pose to line [m]
         float get_continuous_line_pose() const;
 

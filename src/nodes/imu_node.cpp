@@ -4,6 +4,28 @@ namespace nodes {
 
     constexpr double imu_dt = 20e-3;
 
+
+    ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
+        imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
+            Topic::imu,
+            10,
+            std::bind(&ImuNode::on_imu_msg, this, std::placeholders::_1));
+        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,10);
+        timer_ = create_wall_timer(20ms, std::bind(&ImuNode::publish_estimate, this));
+        calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
+        calib_timer_->cancel();
+        reset_yaw_service_ = create_service<prp_project::srv::ResetYawTrigger>(
+            "reset_yaw",
+            std::bind(&ImuNode::reset_yaw_handle, this, std::placeholders::_1, std::placeholders::_2)
+        );
+        
+        calibrate_service_ = create_service<prp_project::srv::CalibrateTrigger>(
+            "calibrate",
+            std::bind(&ImuNode::calibrate_handle, this, std::placeholders::_1, std::placeholders::_2)
+        );
+            
+    }
+
     void ImuNode::on_imu_msg(const sensor_msgs::msg::Imu::SharedPtr msg) {
 
         float gyro_z = msg->angular_velocity.z;
@@ -101,3 +123,4 @@ namespace nodes {
             response->message = "Yaw reset";
         }
 }
+

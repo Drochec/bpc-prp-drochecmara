@@ -14,6 +14,7 @@ namespace Topic {
     const std::string set_motor_speeds = "/bpc_prp_robot/set_motor_speeds";
     const std::string cmd_vel = "/controller/cmd_vel";
     const std::string encoders = "/bpc_prp_robot/encoders";
+    const std::string coords = "/controller/coords";
     //Line
     const std::string line = "/bpc_prp_robot/line_sensors";
     const std::string line_estimate_discrete = "/controller/line_estimate_discrete";
@@ -21,6 +22,7 @@ namespace Topic {
     //Lidar
     const std::string lidar = "/bpc_prp_robot/lidar";
     const std::string range_estimate = "/controller/range_estimate";
+    const std::string intersect_estimate = "/controller/intersect_estimate";
     //IMU
     const std::string imu = "/bpc_prp_robot/imu";
     const std::string yaw_estimate = "/controller/yaw_estimate";

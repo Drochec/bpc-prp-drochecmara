@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     executor->add_node(line_node);
     executor->add_node(imu_node);
     executor->add_node(lidar_node);
-    executor->add_node(camera_node);
+    //executor->add_node(camera_node);
     //executor->add_node(joy_node);
     //executor->add_node(bangbang_node);
     executor->add_node(corridor_nav_node);

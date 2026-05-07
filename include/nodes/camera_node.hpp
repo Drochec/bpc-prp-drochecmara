@@ -20,14 +20,6 @@ namespace nodes {
         cv::Mat img_;
 
     public:
-        CameraNode() : rclcpp::Node("camera_node") {
-            camera_subscriber_ = create_subscription<sensor_msgs::msg::CompressedImage>(
-                Topic::camera,
-                10,
-                std::bind(&CameraNode::on_cam_msg, this, std::placeholders::_1));
-
-            //publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,10);
-            //timer_ = create_wall_timer(20ms, std::bind(&CameraNode::publish_estimate, this));
-        }
+    CameraNode();
     };
 }
