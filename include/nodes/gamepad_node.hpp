@@ -16,8 +16,8 @@ namespace nodes {
     //Zmenit podle gamepadu
     int constexpr left_stick_axis = 1;
     int constexpr right_stick_axis = 3;
-    float constexpr max_v = 2;
-    float constexpr max_w = 19;
+    float constexpr max_v = 0.1;
+    float constexpr max_w = 10;
 
     class JoyNode : public rclcpp::Node {
    

@@ -9,24 +9,24 @@ namespace nodes {
     int constexpr TPR = 585; //Ticks per revolution
 
 
-        MotorNode::MotorNode() : rclcpp::Node("motor_node"), kinematics_(wheel_radius,wheel_base,TPR), cmd_vel_({0,0}), encoders_({0,0}), act_coords_({0,0}) 
+        MotorNode::MotorNode() : rclcpp::Node("motor_node"), kinematics_(wheel_radius,wheel_base,TPR), cmd_vel_({0,0}), encoders_({0,0}), act_coords_({0,0})
         {
-            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds, 10);
-            coords_publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::coords, 10);
+            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds,1); 
+            coords_publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::coords, rclcpp::SensorDataQoS());
 
             subscriber_ = this->create_subscription<std_msgs::msg::UInt32MultiArray>(
                             Topic::encoders,
-                            1,
+                            rclcpp::SensorDataQoS(),
                             std::bind(&MotorNode::encoder_callback, this, std::placeholders::_1)
                         );
 
             subscriber_cmd_vel_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
                 Topic::cmd_vel,
-                1,
+                rclcpp::SensorDataQoS(),
                 std::bind(&MotorNode::cmd_vel_callback, this, std::placeholders::_1));
 
-            timer_ = this->create_wall_timer(5ms,std::bind(&MotorNode::set_speed_callback, this));
-            coords_pub_timer_ = this->create_wall_timer(15ms,std::bind(&MotorNode::publish_coords_cb, this));
+            timer_ = this->create_wall_timer(2ms,std::bind(&MotorNode::set_speed_callback, this));
+            coords_pub_timer_ = this->create_wall_timer(10ms,std::bind(&MotorNode::publish_coords_cb, this));
         }
 
     void MotorNode::set_speed_callback() {

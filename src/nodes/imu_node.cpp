@@ -10,7 +10,7 @@ namespace nodes {
             Topic::imu,
             10,
             std::bind(&ImuNode::on_imu_msg, this, std::placeholders::_1));
-        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,10);
+        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,rclcpp::SensorDataQoS());
         timer_ = create_wall_timer(20ms, std::bind(&ImuNode::publish_estimate, this));
         calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
         calib_timer_->cancel();

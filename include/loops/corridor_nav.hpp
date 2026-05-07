@@ -52,6 +52,7 @@ namespace loops {
 
         corridor_state state_;
         corridor_state last_state_;
+        uint8_t reg_mode_;
 
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_yaw_turn_;
@@ -83,12 +84,6 @@ namespace loops {
 
         void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
 
-        //void line_callback(std_msgs::msg::UInt8::SharedPtr msg);
-
-        //void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
-        
-        //void encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
-
         void coords_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
 
         void state_machine();
@@ -101,6 +96,8 @@ namespace loops {
         void send_calibrate_trigger();
 
         void send_reset_yaw();
+
+        void centering_setup();
 
     public:
 

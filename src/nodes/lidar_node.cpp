@@ -5,12 +5,12 @@ namespace nodes {
 
         LidarNode::LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
 
-            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,10);
-            publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,10);
+            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,rclcpp::SensorDataQoS());
+            publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,rclcpp::SensorDataQoS());
 
             subscriber_ = create_subscription<sensor_msgs::msg::LaserScan>(
                 Topic::lidar,
-                10,
+                rclcpp::SensorDataQoS(),
                 std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
 
             timer_ = create_wall_timer(25ms,std::bind(&LidarNode::publish,this));
@@ -84,7 +84,7 @@ namespace algorithms {
                 continue;
             }
         }*/
-            constexpr float angle_range = M_PI / 3; // 45°
+            constexpr float angle_range = 45 * M_PI / 180; // 45°
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;
