@@ -5,8 +5,8 @@ namespace nodes {
 
         LidarNode::LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
 
-            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,rclcpp::SensorDataQoS());
-            publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,rclcpp::SensorDataQoS());
+            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,3);
+            publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,3);
 
             subscriber_ = create_subscription<sensor_msgs::msg::LaserScan>(
                 Topic::lidar,

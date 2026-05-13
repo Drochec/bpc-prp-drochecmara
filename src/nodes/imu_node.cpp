@@ -8,9 +8,9 @@ namespace nodes {
     ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
         imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
             Topic::imu,
-            10,
+            3,
             std::bind(&ImuNode::on_imu_msg, this, std::placeholders::_1));
-        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,rclcpp::SensorDataQoS());
+        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,1);
         timer_ = create_wall_timer(20ms, std::bind(&ImuNode::publish_estimate, this));
         calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
         calib_timer_->cancel();
