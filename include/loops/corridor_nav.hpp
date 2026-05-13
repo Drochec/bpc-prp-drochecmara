@@ -38,13 +38,10 @@ namespace loops {
     constexpr float forward_speed_corridor = 0.075;
     constexpr float wall_threshold = 0.6;
     constexpr float front_stop = 0.25;
-    constexpr float turn_check_angular_speed = 0.35;
-    constexpr float max_corridor_angular_speed = 1.15;
-    constexpr float max_turn_angular_speed = 1.4;
-    constexpr float exit_centering_error = 0.05;
-    constexpr float intersection_advance_distance = 0.12;  // 12cm in meters
-    constexpr float encoder_wheel_radius = 68.55e-3f;
-    constexpr int encoder_ticks_per_revolution = 585;
+    constexpr float wall_avoidance_threshold = 0.18;
+    constexpr float wall_avoidance_max_yaw_error = 0.35;
+    constexpr float intersection_advance_distance = 0.15;  // 15cm in meters
+    
 
     class CorridorNav : public rclcpp::Node {
 
@@ -59,7 +56,7 @@ namespace loops {
         corridor_state next_turn_direction_state_;
 
         algorithms::Pid pid_yaw_;
-        algorithms::Pid pid_centering_;
+        algorithms::Pid pid_yaw_turn_;
 
         // Encoder data received from subscribers
         algorithms::Encoders current_encoders_;
@@ -137,15 +134,15 @@ namespace loops {
                         yaw_estimate_(0),
                         set_yaw_(0),
                         exiting_corridor_(false),
+                        line_detection_(0),
+                        encoders_({0, 0}),
+                        encoders_at_intersection_start_({0, 0}),
+                        distance_traveled_at_intersection_(0),
+                        next_turn_direction_state_(corridor_state::TURNING),
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
-                        next_turn_direction_state_(corridor_state::TURNING),
-                        pid_yaw_(3,0.3,0),
-                        pid_centering_(9,0,0.04,0.08),
-                        current_encoders_({0,0}),
-                        encoders_at_intersection_start_({0,0}),
-                        intersection_turn_direction_(0),
-                        encoders_ready_(false)
+                        pid_yaw_(3,0.1,0.1),
+                        pid_yaw_turn_(2.5,0.2,0)
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
