@@ -3,13 +3,8 @@
 
 namespace nodes {
 
-    float constexpr max_speed = 19.5f; //rad/s
-    double constexpr wheel_radius = 68.55e-3; //m
-    double constexpr wheel_base = 130.00e-3; //m
-    int constexpr TPR = 585; //Ticks per revolution
 
-
-        MotorNode::MotorNode() : rclcpp::Node("motor_node"), kinematics_(wheel_radius,wheel_base,TPR), cmd_vel_({0,0}), encoders_({0,0}), act_coords_({0,0})
+        MotorNode::MotorNode() : rclcpp::Node("motor_node"), kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR), cmd_vel_({0,0}), encoders_({0,0}), act_coords_({0,0})
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_motor_speeds,1); 
             coords_publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::coords, rclcpp::SensorDataQoS());
@@ -35,8 +30,8 @@ namespace nodes {
         //Vypocet rychlosti
         algorithms::WheelSpeed wheel_speed = kinematics_.inverse(cmd_vel_);
         //Prepocet na hodnoty do driveru
-        auto w_l = static_cast<uint8_t>((255-127)/max_speed*wheel_speed.l + 127);
-        auto w_r = static_cast<uint8_t>((255-127)/max_speed*wheel_speed.r + 127);
+        auto w_l = static_cast<uint8_t>((255-127)/algorithms::max_speed*wheel_speed.l + 127);
+        auto w_r = static_cast<uint8_t>((255-127)/algorithms::max_speed*wheel_speed.r + 127);
 
         msg.data={w_l, w_r};
 
