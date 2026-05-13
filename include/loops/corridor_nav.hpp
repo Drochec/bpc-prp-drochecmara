@@ -7,11 +7,11 @@
 #include "kinematics.hpp"
 #include "lidar_node.hpp"
 #include <sensor_msgs/msg/laser_scan.hpp>
-//#include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/float32.hpp>
 //#include <std_msgs/msg/detail/float32__struct.hpp>
-//#include <std_msgs/msg/u_int32_multi_array.hpp>
+#include <std_msgs/msg/u_int32_multi_array.hpp>
 #include "pid.hpp"
 #include "prp_project/srv/calibrate_trigger.hpp"
 #include "prp_project/srv/reset_yaw_trigger.hpp"
@@ -42,18 +42,18 @@ namespace loops {
         float set_yaw_;
         bool exiting_corridor_;
         uint8_t line_detection_;
-        algorithms::Coordinates coords_;
-        algorithms::Coordinates last_coords_;
+        algorithms::Coordinates act_coords_;
         
         algorithms::Encoders encoders_;
-        algorithms::Encoders encoders_at_intersection_start_;
+        algorithms::Encoders last_encoders_;
         float distance_traveled_at_intersection_;
         corridor_state next_turn_direction_state_;
 
         corridor_state state_;
         corridor_state last_state_;
-        uint8_t reg_mode_;
+        unsigned char reg_mode_;
 
+        algorithms::Kinematics kinematics_;
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_yaw_turn_;
         algorithms::Pid pid_centering_;
@@ -61,9 +61,9 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_intersection_range_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
-        //rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
-        //rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_;
-        rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_coords_;
+        rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_;
+        //rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_coords_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
@@ -85,6 +85,10 @@ namespace loops {
         void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
 
         void coords_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
+
+        void encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
+
+        void line_callback(std_msgs::msg::UInt8::SharedPtr msg);
 
         void state_machine();
 
