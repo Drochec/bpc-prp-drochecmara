@@ -10,7 +10,7 @@ constexpr float dt = 10e-3; //20ms between calls
 
 constexpr float forward_speed_corridor = 0.1;
 constexpr float free_space = 0.43;
-constexpr float intersection_treshold = 0.55;
+constexpr float intersection_treshold = 0.54;
 constexpr float wall = 0.25;
 constexpr float wall_spacing = 0.15;
 constexpr float exit_centering_error = 0.05;
@@ -91,7 +91,7 @@ namespace loops {
                 RCLCPP_INFO(get_logger(),"intersection: %f, %f",intersection_vals_.left,intersection_vals_.right);
 
                 // Turn right
-                if(lidar_vals_.right > free_space) {
+                if(lidar_vals_.right > intersection_treshold) {
                     set_yaw_ = yaw_estimate_ - M_PI/2;
                     RCLCPP_INFO(get_logger(),"Going right");
                 }
@@ -103,7 +103,7 @@ namespace loops {
                     break;
                 }
                 //turn left
-                else if (lidar_vals_.left > free_space){
+                else if (lidar_vals_.left > intersection_treshold){
                     set_yaw_ = yaw_estimate_ + M_PI/2;
                     RCLCPP_INFO(get_logger(),"Going left");
                 }
