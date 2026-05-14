@@ -30,18 +30,8 @@ namespace loops {
         }
 
         float error_lidar = lidar_vals_.left - lidar_vals_.right;
-        /*
-        if (reg_mode_ == 1) {
-            error_lidar = lidar_vals_.left - wall_spacing;
 
-        }
-        else if (reg_mode_ == 2) {
-            error_lidar = lidar_vals_.right - wall_spacing;
-        }
-        else {
-            error_lidar = lidar_vals_.left - lidar_vals_.right;
-        }
-*/
+
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
         //Bias the yaw error if too close to a wall
@@ -74,20 +64,6 @@ namespace loops {
                         break;
                     }
                 
-                /*
-                if (intersection_vals_.left < centering_treshold) {
-                    reg_mode_ = 1;
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Left wall too close, centering");
-                    break;
-                }
-                if (intersection_vals_.right < centering_treshold) {
-                    reg_mode_ = 2;
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Right wall too close, centering");
-                    break;
-                }
-                    */
                 if (lidar_vals_.front >= free_space){        
                     if (intersection_vals_.left > intersection_treshold || intersection_vals_.right > intersection_treshold) {
                         state_ = corridor_state::INTERSECTION_ADVANCE;
@@ -104,25 +80,6 @@ namespace loops {
 
                 break;
 
-            case corridor_state::CENTERING:
-                // Safety: if we lose walls → bail out
-                
-
-                cmd_vel_.v = forward_speed_corridor / 2;
-                cmd_vel_.w = pid_centering_.step(error_lidar, dt);
-                RCLCPP_INFO(get_logger(), "Error center: %lf",  error_lidar);
-
-                // Exit condition (tighter than entry!)
-                /*
-                if (abs(error_lidar) < exit_centering_error) {
-                    pid_centering_.reset();
-                    pid_yaw_.reset();
-                    send_reset_yaw();  // re-anchor heading
-                    state_ = corridor_state::CORRIDOR_FOLLOWING;
-                }
-                    */
-
-                break;
 
             case corridor_state::INTERSECTION:
 
@@ -167,12 +124,6 @@ namespace loops {
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);  // Go straight, no rotation
                 
                 // Once 15cm traveled or about to hit a wall, proceed to turn based on decision made above
-                /*
-                if (lidar_vals_.left < centering_treshold || lidar_vals_.right < centering_treshold) {
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Centering using lidar");
-                    break;
-                }*/
 
                 //Reset driven distance when going over a black line = intersection edge
                 if (line_detection_ > 0) {
@@ -195,13 +146,6 @@ namespace loops {
                         last_encoders_ = encoders_;
                         RCLCPP_INFO(get_logger(),"Intersection entered");
                 }
-                /*
-                if (intersection_vals_.left < centering_treshold || intersection_vals_.right < centering_treshold) {
-
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Centering using lidar");
-                    
-                }*/
                 break;
                 
 
@@ -218,20 +162,6 @@ namespace loops {
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                 
                 }
-                /*
-                if (intersection_vals_.left < centering_treshold) {
-                    reg_mode_ = 1;
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Left wall too close, centering");
-                    break;
-                }
-                if (intersection_vals_.right < centering_treshold) {
-                    reg_mode_ = 2;
-                    state_ = corridor_state::CENTERING;
-                    RCLCPP_INFO(get_logger(),"Right wall too close, centering");
-                    break;
-                }
-                    */ 
 
                 break;
 
