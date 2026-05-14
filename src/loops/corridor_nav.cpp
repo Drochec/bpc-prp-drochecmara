@@ -35,13 +35,15 @@ namespace loops {
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
         //Bias the yaw error if too close to a wall
-        float error_bias_left = -bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
-        float error_bias_right = -bias_gain*(std::max(-lidar_vals_.right+centering_treshold,0.0F));
+        float error_bias_left = bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
+        float error_bias_right = bias_gain*(std::max(-lidar_vals_.right+centering_treshold,0.0F));
         //RCLCPP_INFO(get_logger(),"Yaw Error: %lf", error_yaw);
 
         //RCLCPP_INFO(get_logger(), "Right B: %lf Left B: %lf",error_bias_right,error_bias_left);
 
-        error_yaw = error_yaw + error_bias_left - error_bias_right;
+        //Don't using biasing when turning using gyro
+        if (state_ != corridor_state::TURNING)
+            error_yaw = error_yaw - error_bias_left + error_bias_right;
 
         switch (state_) {
 
@@ -223,7 +225,7 @@ namespace loops {
                         reg_mode_(0),
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
                         pid_yaw_(3,0.1,0.2,10*dt),
-                        pid_yaw_turn_(2.5,1.25,0),
+                        pid_yaw_turn_(2,1.0,0),
                         pid_centering_(3,0,0,3*dt) //thau = 3*dt
         {
 
