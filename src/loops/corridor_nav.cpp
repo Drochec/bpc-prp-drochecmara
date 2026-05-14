@@ -7,15 +7,15 @@ constexpr float dt = 10e-3; //20ms between calls
 
 constexpr float forward_speed_corridor = 0.1;
 constexpr float free_space = 0.43;
-constexpr float intersection_threshold = 0.54;
-constexpr float wall = 0.25;
+constexpr float intersection_threshold = 0.53;
+constexpr float wall = 0.23;
 constexpr float wall_spacing = 0.15;
 constexpr float exit_centering_error = 0.05;
 constexpr float centering_treshold = 0.20;
 constexpr float intersection_advance_distance = 0.25;  // 15cm in meters
 constexpr float wall_avoidance_threshold = 0.18;
 constexpr float wall_avoidance_max_yaw_error = 0.35;
-constexpr float bias_gain = 10;
+constexpr float bias_gain = 6;
 
 namespace loops {
 
@@ -233,7 +233,7 @@ namespace loops {
                         last_state_(corridor_state::RESET),
                         reg_mode_(0),
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
-                        pid_yaw_(3,0.1,0.2,10*dt),
+                        pid_yaw_(3,0.1,0.1,10*dt),
                         pid_yaw_turn_(1,1.5,0),
                         pid_centering_(3,0,0,3*dt) //thau = 3*dt
         {
@@ -310,7 +310,7 @@ namespace loops {
                 set_yaw_ = yaw_estimate_ - M_PI/2;
                 state_ = corridor_state::TURNING;
                 code = algorithms::ArucoID::NONE;
-                RCLCPP_INFO(get_logger(), "Going right");
+                RCLCPP_INFO(get_logger(), "Going right based on tag");
                 return true;
             }
             break;
@@ -320,7 +320,7 @@ namespace loops {
                 set_yaw_ = yaw_estimate_ + M_PI/2;
                 state_ = corridor_state::TURNING;
                 code = algorithms::ArucoID::NONE;
-                RCLCPP_INFO(get_logger(), "Going left");
+                RCLCPP_INFO(get_logger(), "Going left based on tag");
                 return true;
             }
             break;
@@ -333,7 +333,7 @@ namespace loops {
                 set_yaw_ = yaw_estimate_;
                 state_ = corridor_state::CORRIDOR_FOLLOWING;
                 code = algorithms::ArucoID::NONE;
-                RCLCPP_INFO(get_logger(), "Continuing forward");
+                RCLCPP_INFO(get_logger(), "Continuing forward based on tag");
                 return true;
             }
             break;
@@ -437,7 +437,7 @@ namespace loops {
                     auto id = static_cast<algorithms::ArucoID>(id_raw);
                     if (exit_ != id){
                         exit_ = id;
-                        RCLCPP_INFO(get_logger(),"Got exit: %u",id_raw);
+                        RCLCPP_WARN(get_logger(),"Got exit: %u",id_raw);
                     }
                 }
                 else {
@@ -445,7 +445,7 @@ namespace loops {
                     auto id = static_cast<algorithms::ArucoID>(id_raw);
                     if (treasure_ != id) {
                         treasure_ = id;
-                        RCLCPP_INFO(get_logger(),"Got treasure: %u", id_raw);
+                        RCLCPP_WARN(get_logger(),"Got treasure: %u", id_raw);
                     }
                 }
             }

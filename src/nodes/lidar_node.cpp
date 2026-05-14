@@ -84,7 +84,7 @@ namespace algorithms {
                 continue;
             }
         }*/
-            constexpr float angle_range = 30 * M_PI / 180; // 45°
+            constexpr float angle_range = 25 * M_PI / 180; // 45°
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;
