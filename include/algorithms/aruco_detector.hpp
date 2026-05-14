@@ -4,6 +4,16 @@
 
 namespace algorithms {
 
+    enum class ArucoID {
+        NONE = -1,
+        STRAIGHT = 0,
+        LEFT = 1,
+        RIGHT = 2,
+        TREASURE_STRAIGHT = 10,
+        TREASURE_RIGHT = 11,
+        TREASURE_LEFT = 12,
+    };
+
     class ArucoDetector {
     public:
 

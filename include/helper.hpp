@@ -28,6 +28,7 @@ namespace Topic {
     const std::string yaw_estimate = "/controller/yaw_estimate";
     //Camera
     const std::string camera = "/bpc_prp_robot/camera/compressed";
+    const std::string tag_detections = "/controller/tag_detections";
 
 };
 

@@ -8,15 +8,20 @@
 #include "lidar_node.hpp"
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/u_int8_multi_array.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/float32.hpp>
 //#include <std_msgs/msg/detail/float32__struct.hpp>
 #include <std_msgs/msg/u_int32_multi_array.hpp>
 #include "pid.hpp"
+#include "aruco_detector.hpp"
 #include "prp_project/srv/calibrate_trigger.hpp"
 #include "prp_project/srv/reset_yaw_trigger.hpp"
 #include "prp_project/srv/button_cmd.hpp"
 //#include "line.hpp"
+
+
+#include "imu_node.hpp"
 
 using namespace std::chrono_literals;
 
@@ -41,8 +46,12 @@ namespace loops {
         float yaw_estimate_;
         float set_yaw_;
         bool exiting_corridor_;
+        bool turn_set_;
         uint8_t line_detection_;
         algorithms::Coordinates act_coords_;
+
+        algorithms::ArucoID exit_;
+        algorithms::ArucoID treasure_;
         
         algorithms::Encoders encoders_;
         algorithms::Encoders last_encoders_;
@@ -63,7 +72,10 @@ namespace loops {
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_;
+        rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscriber_tag_detections_;
         //rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_coords_;
+
+
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
@@ -90,6 +102,8 @@ namespace loops {
 
         void line_callback(std_msgs::msg::UInt8::SharedPtr msg);
 
+        void tag_detections_callback(std_msgs::msg::UInt8MultiArray::SharedPtr msg);
+
         void state_machine();
 
         void button_cmd_handle(
@@ -102,6 +116,8 @@ namespace loops {
         void send_reset_yaw();
 
         void centering_setup();
+
+        bool handle_direction(algorithms::ArucoID& code);
 
     public:
 
