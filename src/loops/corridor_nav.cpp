@@ -101,6 +101,7 @@ namespace loops {
                 else if (lidar_vals_.front > wall){
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                     set_yaw_ = yaw_estimate_;
+                    last_encoders_ = encoders_;
                     RCLCPP_INFO(get_logger(),"Continuing forward");
                     break;
                 }
@@ -180,7 +181,7 @@ namespace loops {
                 cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if (abs(error_yaw) <= 0.025) {
+                if (abs(error_yaw) <= 0.01) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
@@ -233,7 +234,7 @@ namespace loops {
                         last_state_(corridor_state::RESET),
                         reg_mode_(0),
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
-                        pid_yaw_(3,0.1,0.1,10*dt),
+                        pid_yaw_(3,0.1,0,10*dt),
                         pid_yaw_turn_(1,1.5,0),
                         pid_centering_(3,0,0,3*dt) //thau = 3*dt
         {
@@ -309,7 +310,8 @@ namespace loops {
             if (lidar_vals_.right > intersection_threshold) {
                 set_yaw_ = yaw_estimate_ - M_PI/2;
                 state_ = corridor_state::TURNING;
-                code = algorithms::ArucoID::NONE;
+                exit_ = algorithms::ArucoID::NONE;
+                treasure_ = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Going right based on tag");
                 return true;
             }
@@ -318,8 +320,9 @@ namespace loops {
         case algorithms::ArucoID::LEFT:
             if (lidar_vals_.left > intersection_threshold) {
                 set_yaw_ = yaw_estimate_ + M_PI/2;
-                state_ = corridor_state::TURNING;
-                code = algorithms::ArucoID::NONE;
+                state_ = corridor_state::TURNING; 
+                exit_ = algorithms::ArucoID::NONE;
+                treasure_ = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Going left based on tag");
                 return true;
             }
@@ -332,7 +335,8 @@ namespace loops {
 
                 set_yaw_ = yaw_estimate_;
                 state_ = corridor_state::CORRIDOR_FOLLOWING;
-                code = algorithms::ArucoID::NONE;
+                exit_ = algorithms::ArucoID::NONE;
+                treasure_ = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Continuing forward based on tag");
                 return true;
             }
