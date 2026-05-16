@@ -26,6 +26,9 @@
 using namespace std::chrono_literals;
 
 namespace loops {
+
+    constexpr float dt = 10e-3; //20ms between calls
+
     enum class corridor_state {
         WAIT,
         CALIBRATION,
