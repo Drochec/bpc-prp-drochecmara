@@ -3,6 +3,16 @@
 #include <cmath>
 
 namespace algorithms {
+
+    Kinematics::Kinematics(double wheel_radius, double wheel_base, int ticks_revolution) : 
+        wheel_radius_(wheel_radius),
+        wheel_base_(wheel_base), 
+        TPR_(ticks_revolution),
+        pose_{0.0f, 0.0f, 0.0f},
+        encoders_{0, 0},
+        wheel_speed_{0.0f, 0.0f},
+        robot_speed_{0.0f, 0.0f} {};
+
     RobotSpeed Kinematics::forward(WheelSpeed wheel_speed) const {
 
         float v = (wheel_radius_/2) * (wheel_speed.l + wheel_speed.r);
@@ -20,6 +30,10 @@ namespace algorithms {
     }
 
     Coordinates Kinematics::forward(Encoders encoder_new) const {
+
+        //Convert right encoder (forward movement decrements)
+        encoder_new.r = 4294967296 - encoder_new.r;
+
         // compute signed delta with wraparound
         int32_t delta_l = int32_t(encoder_new.l - encoders_.l);
         if (delta_l > 2147483647) delta_l -= 4294967296;  // wrap backward
@@ -84,5 +98,36 @@ namespace algorithms {
 
             return Encoders{new_l, new_r};
         }
+    }
+
+    Coordinates Kinematics::absolute_forward(Encoders last_encoders, Encoders new_encoders) const {
+
+        //Right encoder decrements - flip values
+        new_encoders.r = 4294967296 - new_encoders.r;
+        
+        // compute signed delta with wraparound
+        int32_t delta_l = int32_t(new_encoders.l - last_encoders.l);
+        if (delta_l > 2147483647) delta_l -= 4294967296;  // wrap backward
+        else if (delta_l < -2147483648) delta_l += 4294967296; // wrap forward
+
+        int32_t delta_r = int32_t(new_encoders.r - last_encoders.r);
+        if (delta_r > 2147483647) delta_r -= 4294967296;
+        else if (delta_r < -2147483648) delta_r += 4294967296;
+
+        // convert ticks to distance
+        float d_L = float(delta_l) * M_PI * wheel_radius_ / TPR_;
+        float d_R = float(delta_r) * M_PI * wheel_radius_ / TPR_;
+
+        float d_fi = (d_R - d_L) / wheel_base_;
+        float d = (d_R + d_L) / 2.0F;
+
+        Coordinates new_coords;
+        new_coords.x = d * cos(d_fi);
+        new_coords.y = d * sin(d_fi);
+        new_coords.fi = d_fi;
+
+        //return new_coords;
+        return {d_L, 0, d_fi};
+
     }
 }

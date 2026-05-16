@@ -1,6 +1,21 @@
 #include "lidar_node.hpp"
 
 namespace nodes {
+
+
+        LidarNode::LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
+
+            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,3);
+            publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,3);
+
+            subscriber_ = create_subscription<sensor_msgs::msg::LaserScan>(
+                Topic::lidar,
+                rclcpp::SensorDataQoS(),
+                std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
+
+            timer_ = create_wall_timer(25ms,std::bind(&LidarNode::publish,this));
+        }
+
     void LidarNode::subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg) {
 
         auto angle_start = msg->angle_min;
@@ -10,16 +25,20 @@ namespace nodes {
         auto range_min = msg->range_min;
 
         lidar_filter_results_ = algorithms::LidarFilter::apply_filter(points,angle_start,angle_end,range_max,range_min);
+        lidar_filter_intersect_results_ = algorithms::LidarFilter::apply_filter_intersection(points,angle_start,angle_end,range_max,range_min);
 
     }
 
     void LidarNode::publish() {
 
         auto msg = std_msgs::msg::Float32MultiArray();
+        auto msg_intersect = std_msgs::msg::Float32MultiArray();
 
         msg.data = {lidar_filter_results_.front, lidar_filter_results_.back, lidar_filter_results_.left, lidar_filter_results_.right};
+        msg_intersect.data = {lidar_filter_intersect_results_.left, lidar_filter_intersect_results_.right};
 
         publisher_->publish(msg);
+        publisher_intersect_->publish(msg_intersect);
 
     }
 }
@@ -65,7 +84,7 @@ namespace algorithms {
                 continue;
             }
         }*/
-            constexpr float angle_range = M_PI / 3; // 45°
+            constexpr float angle_range = 25 * M_PI / 180; // 45°
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;
@@ -113,6 +132,62 @@ namespace algorithms {
             return LidarFilterResults{
                 .front = front_mean,
                 .back = back_mean,
+                .left = left_mean,
+                .right = right_mean
+            };
+        }
+
+
+        LidarFilterResults LidarFilter::apply_filter_intersection(std::vector<float> points, float angle_start, float angle_end, float range_max, float range_min) {
+        // Create containers for values in different directions
+        std::vector<float> left{};
+        std::vector<float> right{};
+
+        // TODO: Define how wide each directional sector should be (in radians)
+        //constexpr float angle_range = M_PI/3;
+
+        // Compute the angular step between each range reading
+        auto angle_step = (angle_end - angle_start) / points.size();
+
+        constexpr float intersect_range =  25 * M_PI / 180;
+
+            for (size_t i = 0; i < points.size(); ++i) {
+                auto angle = angle_start + i * angle_step;
+
+                // Normalize angle to [-pi, pi]
+                while (angle > M_PI) angle -= 2 * M_PI;
+                while (angle < -M_PI) angle += 2 * M_PI;
+
+                // Replace invalid readings
+                if (std::isinf(points[i])) {
+                    points[i] = 0;
+                }
+
+                float value = points[i];
+
+                // LEFT (around -pi/2)
+                if (std::abs(angle + (150*M_PI/180)) <= intersect_range) {
+                    left.push_back(value);
+                }
+                // RIGHT (around +pi/2)
+                else if (std::abs(angle - (150*M_PI/180)) <= intersect_range) {
+                    right.push_back(value);
+                }
+                else {
+                    continue;
+                }
+            }
+
+            // TODO: Return the average of each sector (basic mean filter)
+
+            float left_mean = std::accumulate(left.begin(),left.end(),.0) / left.size();
+            float right_mean = std::accumulate(right.begin(),right.end(),.0) / right.size();
+
+
+
+            return LidarFilterResults{
+                .front = 0,
+                .back = 0,
                 .left = left_mean,
                 .right = right_mean
             };

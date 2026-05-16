@@ -8,14 +8,20 @@
 #include "lidar_node.hpp"
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/u_int8_multi_array.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/float32.hpp>
-#include <std_msgs/msg/detail/float32__struct.hpp>
+//#include <std_msgs/msg/detail/float32__struct.hpp>
 #include <std_msgs/msg/u_int32_multi_array.hpp>
 #include "pid.hpp"
+#include "aruco_detector.hpp"
 #include "prp_project/srv/calibrate_trigger.hpp"
 #include "prp_project/srv/reset_yaw_trigger.hpp"
 #include "prp_project/srv/button_cmd.hpp"
+//#include "line.hpp"
+
+
+#include "imu_node.hpp"
 
 using namespace std::chrono_literals;
 
@@ -32,36 +38,44 @@ namespace loops {
         RESET,
     };
 
-    constexpr float forward_speed_corridor = 0.075;
-    constexpr float wall_threshold = 0.6;
-    constexpr float front_stop = 0.25;
-    constexpr float exit_centering_error = 0.05;
-    constexpr float intersection_advance_distance = 0.15;  // 15cm in meters
-    
-
     class CorridorNav : public rclcpp::Node {
 
         algorithms::RobotSpeed cmd_vel_;
         algorithms::LidarFilterResults lidar_vals_;
+        algorithms::LidarFilterResults intersection_vals_;
         float yaw_estimate_;
         float set_yaw_;
         bool exiting_corridor_;
+        bool turn_set_;
+        uint8_t line_detection_;
+        algorithms::Coordinates act_coords_;
+
+        algorithms::ArucoID exit_;
+        algorithms::ArucoID treasure_;
         
         algorithms::Encoders encoders_;
-        algorithms::Encoders encoders_at_intersection_start_;
+        algorithms::Encoders last_encoders_;
         float distance_traveled_at_intersection_;
         corridor_state next_turn_direction_state_;
 
         corridor_state state_;
         corridor_state last_state_;
+        unsigned char reg_mode_;
 
+        algorithms::Kinematics kinematics_;
         algorithms::Pid pid_yaw_;
+        algorithms::Pid pid_yaw_turn_;
         algorithms::Pid pid_centering_;
 
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
+        rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_intersection_range_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
-        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_state_;
         rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr subscriber_encoders_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_line_;
+        rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscriber_tag_detections_;
+        //rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_coords_;
+
+
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
@@ -74,17 +88,21 @@ namespace loops {
         rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
 
 
-
-
         void publish_cmd_vel();
 
         void range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
 
+        void intersection_range_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
+
         void yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg);
 
-        void set_state_callback(std_msgs::msg::UInt8::SharedPtr msg);
-        
-        void encoder_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
+        void coords_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
+
+        void encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg);
+
+        void line_callback(std_msgs::msg::UInt8::SharedPtr msg);
+
+        void tag_detections_callback(std_msgs::msg::UInt8MultiArray::SharedPtr msg);
 
         void state_machine();
 
@@ -97,63 +115,12 @@ namespace loops {
 
         void send_reset_yaw();
 
+        void centering_setup();
+
+        bool handle_direction(algorithms::ArucoID& code);
+
     public:
 
-        CorridorNav() : rclcpp::Node("corridor_nav"),
-                        cmd_vel_({0,0}),
-                        lidar_vals_({0,0,0,0}),
-                        yaw_estimate_(0),
-                        set_yaw_(0),
-                        exiting_corridor_(false),
-                        encoders_({0, 0}),
-                        encoders_at_intersection_start_({0, 0}),
-                        distance_traveled_at_intersection_(0),
-                        next_turn_direction_state_(corridor_state::TURNING),
-                        state_(corridor_state::WAIT),
-                        last_state_(corridor_state::RESET),
-                        pid_yaw_(3,0.3,0),
-                        pid_centering_(10,0,1)
-        {
-
-            subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
-                Topic::range_estimate,
-                15,
-                std::bind(&CorridorNav::range_est_callback,this, std::placeholders::_1)
-            );
-
-            subscriber_yaw_est_ = create_subscription<std_msgs::msg::Float32>(
-                Topic::yaw_estimate,
-                15,
-                std::bind(&CorridorNav::yaw_est_callback,this, std::placeholders::_1)
-            );
-
-            subscriber_state_ = create_subscription<std_msgs::msg::UInt8>(
-                Topic::machine_state,
-                15,
-                std::bind(&CorridorNav::set_state_callback,this, std::placeholders::_1)
-            );
-            
-            subscriber_encoders_ = create_subscription<std_msgs::msg::UInt32MultiArray>(
-                Topic::encoders,
-                15,
-                std::bind(&CorridorNav::encoder_callback,this, std::placeholders::_1)
-            );
-
-            publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,5);
-
-            publish_timer_ = create_wall_timer(25ms, std::bind(&CorridorNav::publish_cmd_vel,this));
-
-            decision_timer_ = create_wall_timer(30ms, std::bind(&CorridorNav::state_machine,this));
-
-            calibrate_client_ = create_client<prp_project::srv::CalibrateTrigger>("calibrate");
-            reset_yaw_client_ = create_client<prp_project::srv::ResetYawTrigger>("reset_yaw");
-
-            button_cmd_service_ = create_service<prp_project::srv::ButtonCmd>(
-                "button_cmd",
-                std::bind(&CorridorNav::button_cmd_handle,this,std::placeholders::_1,std::placeholders::_2)
-            );
-
-        }
-
+    CorridorNav();
     };
 }

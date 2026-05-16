@@ -2,6 +2,12 @@
 #include <cstdint>
 
 namespace algorithms {
+
+    float inline constexpr max_speed = 19.5f; //rad/s
+    double inline constexpr wheel_radius = 68.55e-3; //m
+    double inline constexpr wheel_base = 130.00e-3; //m
+    int inline constexpr TPR = 585; //Ticks per revolution
+
     struct RobotSpeed{
         float v; //linear
         float w; //angluar
@@ -35,14 +41,11 @@ namespace algorithms {
         RobotSpeed robot_speed_; //v [m/s], w [rad/s]
         
     public:
-        Kinematics(double wheel_radius, double wheel_base, int ticks_revolution) : wheel_radius_(wheel_radius), wheel_base_(wheel_base), TPR_(ticks_revolution),
-        pose_{0.0f, 0.0f, 0.0f},
-        encoders_{0, 0},
-        wheel_speed_{0.0f, 0.0f},
-        robot_speed_{0.0f, 0.0f} {};
+        Kinematics(double wheel_radius, double wheel_base, int ticks_revolution);
         RobotSpeed forward(WheelSpeed x) const;
         WheelSpeed inverse(RobotSpeed x) const;
         Coordinates forward(Encoders x) const;
         Encoders inverse(Coordinates x) const;
+        Coordinates absolute_forward(Encoders last_encoders, Encoders new_encoders) const;
     };
 }

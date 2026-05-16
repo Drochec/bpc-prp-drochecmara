@@ -2,7 +2,29 @@
 
 namespace nodes {
 
-    //constexpr double imu_dt = 20e-3;
+    constexpr double imu_dt = 20e-3;
+
+
+    ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
+        imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
+            Topic::imu,
+            3,
+            std::bind(&ImuNode::on_imu_msg, this, std::placeholders::_1));
+        publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,1);
+        timer_ = create_wall_timer(20ms, std::bind(&ImuNode::publish_estimate, this));
+        calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
+        calib_timer_->cancel();
+        reset_yaw_service_ = create_service<prp_project::srv::ResetYawTrigger>(
+            "reset_yaw",
+            std::bind(&ImuNode::reset_yaw_handle, this, std::placeholders::_1, std::placeholders::_2)
+        );
+        
+        calibrate_service_ = create_service<prp_project::srv::CalibrateTrigger>(
+            "calibrate",
+            std::bind(&ImuNode::calibrate_handle, this, std::placeholders::_1, std::placeholders::_2)
+        );
+            
+    }
 
     void ImuNode::on_imu_msg(const sensor_msgs::msg::Imu::SharedPtr msg) {
 
@@ -13,15 +35,9 @@ namespace nodes {
         }
 
         else {
-            auto sec = msg->header.stamp.sec;
-            auto nanosec = msg->header.stamp.nanosec;
+           
+            planar_integrator_.update(gyro_z,imu_dt);
 
-            auto dt = (sec - last_sec_) + (nanosec - last_nanosec_) * 1e-9;
-            
-            planar_integrator_.update(gyro_z,dt);
-
-            last_sec_ = sec;
-            last_nanosec_ = nanosec;
         }
 
     }
@@ -86,8 +102,9 @@ namespace nodes {
         // Do your calibration logic here
 
         reset_imu();
+        //Make sure to publish NaN
+        publish_estimate();
 
-        
         response->success = true;
         response->message = "Calibration started";
     }
@@ -106,3 +123,4 @@ namespace nodes {
             response->message = "Yaw reset";
         }
 }
+

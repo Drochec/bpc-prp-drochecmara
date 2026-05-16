@@ -2,6 +2,21 @@
 #include "loops/corridor_nav.hpp"
 namespace nodes {
 
+    IoNode::IoNode() : rclcpp::Node("io_node"), button_pressed_(0)
+        {
+            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 10);
+
+            subscriber_ = this->create_subscription<std_msgs::msg::UInt8>(
+                Topic::buttons,
+                1,
+                std::bind(&IoNode::on_button_callback, this, std::placeholders::_1)
+            );
+
+
+            timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::rgb_timer_callback, this));
+
+            button_cmd_client_ = create_client<prp_project::srv::ButtonCmd>("button_cmd");
+        }
 
     int IoNode::get_button_pressed() const {
         return button_pressed_;
@@ -43,23 +58,23 @@ namespace nodes {
 
         auto btn_state = get_button_pressed();
         if (btn_state == 2) {
-            msg.data = {255, 0, 0,
-            255, 0, 0,
-            255, 0, 0,
-            255, 0, 0};
+            msg.data = {127, 0, 0,
+            127, 0, 0,
+            127, 0, 0,
+            127, 0, 0};
         }
         else if (btn_state == 1) {
-            msg.data = {0, 255, 0,
-            0, 255, 0,
-            0, 255, 0,
-            0, 255, 0};
+            msg.data = {0, 127, 0,
+            0, 127, 0,
+            0, 127, 0,
+            0, 127, 0};
         }
-        /*else if (btn_state == 0) {
-            msg.data = {0, 0, 255,
-            0, 0, 255,
-            0, 0, 255,
-            0, 0, 255};
-        }*/
+        else if (btn_state == 0) {
+            msg.data = {0, 0, 0,
+            0, 0, 0,
+            0, 0, 0,
+            0, 0, 0};
+        }
 
         publisher_->publish(msg);
         //RCLCPP_INFO(this->get_logger(), "Sending LED data");

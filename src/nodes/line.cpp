@@ -4,6 +4,22 @@
 #include <std_msgs/msg/float32.hpp>
 
 namespace nodes {
+
+        LineNode::LineNode() : rclcpp::Node("line_node") {
+
+            publisher_line_discrete_ = create_publisher<std_msgs::msg::UInt8>(Topic::line_estimate_discrete,10);
+            //publisher_line_ = create_publisher<std_msgs::msg::Float32>(Topic::line_estimate,10);
+
+            subscriber_ = this->create_subscription<std_msgs::msg::UInt16MultiArray>(
+                    Topic::line,
+                    1,
+                    std::bind(&LineNode::on_line_sensors_msg, this, std::placeholders::_1)
+                );
+
+            timer_ = this->create_wall_timer(20ms,std::bind(&LineNode::publish_line_estimate, this));
+            
+        };
+
     void LineNode::on_line_sensors_msg(const std_msgs::msg::UInt16MultiArray::SharedPtr msg) {
         sensor_vals_raw_.left = msg->data[0];
         sensor_vals_raw_.right = msg->data[1];
@@ -16,8 +32,8 @@ namespace nodes {
 
         //RCLCPP_INFO(this->get_logger(), "Received, left: %f, right: %f", sensor_vals_.left, sensor_vals_.right);
         //RCLCPP_INFO(this->get_logger(), "Received raw, left: %u, right: %u", sensor_vals_raw_.left, sensor_vals_raw_.right);
-        auto estimated_discrete_pos = algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
-        auto estimated_line_pos = algorithms::LineEstimator::estimate_continuous_line_pose(sensor_vals_);
+        //auto estimated_discrete_pos = algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
+        //auto estimated_line_pos = algorithms::LineEstimator::estimate_continuous_line_pose(sensor_vals_);
         //RCLCPP_INFO(this->get_logger(), "Line pos: %f", estimated_line_pos);
     };
 
@@ -34,30 +50,31 @@ namespace nodes {
         auto msg_line_discrete = std_msgs::msg::UInt8();
         msg_line_discrete.data = static_cast<unsigned char>(get_discrete_line_pose());
         
-        auto msg_line = std_msgs::msg::Float32();
-        msg_line.data = get_continuous_line_pose();
+        //auto msg_line = std_msgs::msg::Float32();
+        //msg_line.data = get_continuous_line_pose();
 
         publisher_line_discrete_->publish(msg_line_discrete);
-        publisher_line_->publish(msg_line);
+        //publisher_line_->publish(msg_line);
         
     }
 }
 
 namespace algorithms {
     DiscreteLinePose LineEstimator::estimate_discrete_line_pose(const SensorNorm& sensor_vals) {
-        auto line_pos = sensor_vals.left - sensor_vals.right;
-        if (line_pos < -treshold) {
-            return DiscreteLinePose::LineOnRight;
-        }
-        else if (line_pos > treshold) {
-            return DiscreteLinePose::LineOnLeft;
-        }
-        else if ((-treshold <= line_pos) || (line_pos <= treshold)){
+        auto line_right = sensor_vals.right > treshold;
+        auto line_left = sensor_vals.left > treshold;
+
+        if (line_right && line_left) 
             return DiscreteLinePose::LineBoth;
-        }
-        else {
+        
+        else if (line_right)
+            return DiscreteLinePose::LineOnRight;
+        
+        else if (line_left)
+            return DiscreteLinePose::LineOnLeft;
+        else
             return DiscreteLinePose::LineNone;
-        }
+        
     }
 
     float LineEstimator::estimate_continuous_line_pose(const SensorNorm& sensor_vals) {

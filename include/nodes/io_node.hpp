@@ -37,22 +37,7 @@ namespace nodes {
 
     public:
         // Constructor
-        IoNode() : rclcpp::Node("io_node"), button_pressed_(0)
-        {
-            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 10);
-
-            subscriber_ = this->create_subscription<std_msgs::msg::UInt8>(
-                Topic::buttons,
-                1,
-                std::bind(&IoNode::on_button_callback, this, std::placeholders::_1)
-            );
-
-
-            timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::rgb_timer_callback, this));
-
-            button_cmd_client_ = create_client<prp_project::srv::ButtonCmd>("button_cmd");
-        }
-
+        IoNode();
         // Destructor (default)
         ~IoNode() override = default;
 

@@ -26,6 +26,7 @@ namespace algorithms {
         LidarFilter() = default;
 
         static LidarFilterResults apply_filter(std::vector<float> points, float angle_start, float angle_end, float range_max, float range_min);
+        static LidarFilterResults apply_filter_intersection(std::vector<float> points, float angle_start, float angle_end, float range_max, float range_min);
     };
 }
 
@@ -36,24 +37,15 @@ namespace nodes {
 
         rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_;
+        rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_intersect_;
         rclcpp::TimerBase::SharedPtr timer_;
 
         algorithms::LidarFilterResults lidar_filter_results_;
+        algorithms::LidarFilterResults lidar_filter_intersect_results_;
 
 
     public:
-        LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
-
-            publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,10);
-
-            subscriber_ = create_subscription<sensor_msgs::msg::LaserScan>(
-                Topic::lidar,
-                10,
-                std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
-
-            timer_ = create_wall_timer(25ms,std::bind(&LidarNode::publish,this));
-        }
-
+        LidarNode();
         void publish();
         void subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg);
 

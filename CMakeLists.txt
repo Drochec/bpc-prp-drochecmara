@@ -38,6 +38,8 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/nodes/lidar_node.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/corridor_nav.cpp
         ${CMAKE_SOURCE_DIR}/src/nodes/camera_node.cpp
+        ${CMAKE_SOURCE_DIR}/src/algorithms/aruco_detector.cpp
+        ${CMAKE_SOURCE_DIR}/src/algorithms/pid.cpp
 
 )
 
