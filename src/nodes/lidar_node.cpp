@@ -21,7 +21,8 @@ namespace nodes {
 
     void LidarNode::subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg) {
 
-        last_lidar_msg_time_ = msg->header.stamp; 
+        //Force same clock type
+        last_lidar_msg_time_ = rclcpp::Time(msg->header.stamp,this->get_clock()->get_clock_type()); 
 
         auto angle_start = msg->angle_min;
         auto angle_end = msg->angle_max;
@@ -39,7 +40,7 @@ namespace nodes {
         auto msg = std_msgs::msg::Float32MultiArray();
         auto msg_intersect = std_msgs::msg::Float32MultiArray();
 
-        auto dt = (last_lidar_msg_time_ - now()).seconds();        
+        auto dt = (now() - last_lidar_msg_time_).seconds();        
 
         msg.data = {lidar_filter_results_.front, lidar_filter_results_.back, lidar_filter_results_.left, lidar_filter_results_.right};
         msg_intersect.data = {lidar_filter_intersect_results_.left, lidar_filter_intersect_results_.right};
