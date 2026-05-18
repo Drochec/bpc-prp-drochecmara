@@ -55,6 +55,7 @@ namespace loops {
 
         algorithms::ArucoID exit_;
         algorithms::ArucoID treasure_;
+        bool heading_to_exit_;
         
         algorithms::Encoders encoders_;
         algorithms::Encoders last_encoders_;

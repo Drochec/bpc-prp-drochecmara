@@ -84,8 +84,20 @@ constexpr float bias_gain = 6;
                 RCLCPP_INFO(get_logger(),"intersection: %f, %f",intersection_vals_.left,intersection_vals_.right);
 
                 //turn_set_ = false;
-                if (handle_direction(treasure_)) break;
-                if (handle_direction(exit_)) break;
+                if (!heading_to_exit_) {
+                    if (handle_direction(treasure_)) {
+                        heading_to_exit_ = true;
+                        RCLCPP_INFO(get_logger(), "Treasure direction handled, switching to exit");
+                        break;
+                    }
+                }
+
+                if (heading_to_exit_) {
+                    if (handle_direction(exit_)) {
+                        RCLCPP_INFO(get_logger(), "Exit direction handled");
+                        break;
+                    }
+                }
 
                 // Turn right
                 if(lidar_vals_.right > intersection_threshold) {
@@ -201,6 +213,7 @@ constexpr float bias_gain = 6;
                 pid_centering_.reset();
                 exit_ = algorithms::ArucoID::NONE;
                 treasure_ = algorithms::ArucoID::NONE;
+                heading_to_exit_ = false;
                 //exiting_corridor
                 state_ = corridor_state::WAIT;
 
@@ -219,8 +232,7 @@ constexpr float bias_gain = 6;
             if (lidar_vals_.right > intersection_threshold) {
                 set_yaw_ = yaw_estimate_ - M_PI/2;
                 state_ = corridor_state::TURNING;
-                exit_ = algorithms::ArucoID::NONE;
-                treasure_ = algorithms::ArucoID::NONE;
+                code = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Going right based on tag");
                 return true;
             }
@@ -230,8 +242,7 @@ constexpr float bias_gain = 6;
             if (lidar_vals_.left > intersection_threshold) {
                 set_yaw_ = yaw_estimate_ + M_PI/2;
                 state_ = corridor_state::TURNING; 
-                exit_ = algorithms::ArucoID::NONE;
-                treasure_ = algorithms::ArucoID::NONE;
+                code = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Going left based on tag");
                 return true;
             }
@@ -244,8 +255,7 @@ constexpr float bias_gain = 6;
 
                 set_yaw_ = yaw_estimate_;
                 state_ = corridor_state::CORRIDOR_FOLLOWING;
-                exit_ = algorithms::ArucoID::NONE;
-                treasure_ = algorithms::ArucoID::NONE;
+                code = algorithms::ArucoID::NONE;
                 RCLCPP_INFO(get_logger(), "Continuing forward based on tag");
                 return true;
             }

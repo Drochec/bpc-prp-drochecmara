@@ -19,6 +19,7 @@ namespace loops {
                         act_coords_({0,0,0}),
                         exit_(algorithms::ArucoID::NONE),
                         treasure_(algorithms::ArucoID::NONE),
+                        heading_to_exit_(false),
                         next_turn_direction_state_(corridor_state::TURNING),
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
