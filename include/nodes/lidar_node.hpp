@@ -35,6 +35,8 @@ namespace nodes {
     using namespace std::chrono_literals;
     class LidarNode : public rclcpp::Node {
 
+        rclcpp::Time last_lidar_msg_time_;
+
         rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_intersect_;
@@ -42,7 +44,6 @@ namespace nodes {
 
         algorithms::LidarFilterResults lidar_filter_results_;
         algorithms::LidarFilterResults lidar_filter_intersect_results_;
-
 
     public:
         LidarNode();

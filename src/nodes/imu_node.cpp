@@ -5,7 +5,7 @@ namespace nodes {
     constexpr double imu_dt = 20e-3;
 
 
-    ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE), last_sec_(0), last_nanosec_(0) {
+    ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE) {
         imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
             Topic::imu,
             3,
@@ -35,9 +35,7 @@ namespace nodes {
         }
 
         else {
-           
             planar_integrator_.update(gyro_z,imu_dt);
-
         }
 
     }

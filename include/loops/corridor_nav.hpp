@@ -43,34 +43,36 @@ namespace loops {
 
     class CorridorNav : public rclcpp::Node {
 
+        //Published values
         algorithms::RobotSpeed cmd_vel_;
+
+        //Received sensor values
         algorithms::LidarFilterResults lidar_vals_;
         algorithms::LidarFilterResults intersection_vals_;
         float yaw_estimate_;
-        float set_yaw_;
-        bool exiting_corridor_;
-        bool turn_set_;
         uint8_t line_detection_;
         algorithms::Coordinates act_coords_;
+        algorithms::Encoders encoders_;
+        algorithms::Encoders last_encoders_;
 
+        //State machine values
+        corridor_state state_;
+        corridor_state last_state_;
+        float set_yaw_;
         algorithms::ArucoID exit_;
         algorithms::ArucoID treasure_;
         bool heading_to_exit_;
+        rclcpp::Time last_time_;
+        bool first_run_;
         
-        algorithms::Encoders encoders_;
-        algorithms::Encoders last_encoders_;
-        float distance_traveled_at_intersection_;
-        corridor_state next_turn_direction_state_;
-
-        corridor_state state_;
-        corridor_state last_state_;
-        unsigned char reg_mode_;
-
+        //Algorithms
         algorithms::Kinematics kinematics_;
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_yaw_turn_;
         algorithms::Pid pid_centering_;
 
+
+        //ROS2 Topic publishers and subscribers
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_intersection_range_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
@@ -87,7 +89,6 @@ namespace loops {
 
 
         rclcpp::Service<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_service_;
-
         rclcpp::Client<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
         rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
 

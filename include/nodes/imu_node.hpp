@@ -23,8 +23,6 @@ namespace nodes {
     class ImuNode : public rclcpp::Node {
     private:
         ImuNodeMode mode_;
-        int32_t last_sec_;
-        int32_t last_nanosec_;
 
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_;
@@ -34,6 +32,7 @@ namespace nodes {
         algorithms::PlanarImuIntegrator planar_integrator_;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::TimerBase::SharedPtr calib_timer_;
+
 
         std::vector<float> gyro_calibration_samples_;
 

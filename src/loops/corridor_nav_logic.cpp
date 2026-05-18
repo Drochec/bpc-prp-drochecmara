@@ -3,19 +3,25 @@
 namespace loops {
 
 
-constexpr float forward_speed_corridor = 0.1;
+constexpr float forward_speed_corridor = 0.2;
 constexpr float free_space = 0.43;
 constexpr float intersection_threshold = 0.53;
 constexpr float wall = 0.23;
 constexpr float wall_spacing = 0.15;
 constexpr float exit_centering_error = 0.05;
-constexpr float centering_treshold = 0.20;
+constexpr float centering_treshold = 0.18;
 constexpr float intersection_advance_distance = 0.25;  // 15cm in meters
 constexpr float wall_avoidance_threshold = 0.18;
 constexpr float wall_avoidance_max_yaw_error = 0.35;
-constexpr float bias_gain = 6;
+constexpr float bias_gain = 8;
 
     void CorridorNav::state_machine() {
+
+        if (std::isnan(lidar_vals_.back)){
+            RCLCPP_INFO(get_logger(),"Lidar data lost signal received stopping!");
+            cmd_vel_ = {0,0};
+            return;
+        }
         
         if (state_ != last_state_) {
             RCLCPP_INFO(get_logger(), "State: %u",  static_cast<unsigned int>(state_));
@@ -193,6 +199,7 @@ constexpr float bias_gain = 6;
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
+                    pid_yaw_turn_.reset();
                     set_yaw_ = 0;
                     send_reset_yaw();
                     //last_coords_ = coords_;
@@ -210,7 +217,7 @@ constexpr float bias_gain = 6;
                 send_reset_yaw();
                 last_encoders_ = encoders_;
                 pid_yaw_.reset();
-                pid_centering_.reset();
+                pid_yaw_turn_.reset();
                 exit_ = algorithms::ArucoID::NONE;
                 treasure_ = algorithms::ArucoID::NONE;
                 heading_to_exit_ = false;
