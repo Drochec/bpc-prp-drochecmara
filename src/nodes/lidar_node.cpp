@@ -48,7 +48,7 @@ namespace nodes {
         msg.data = {lidar_filter_results_.front, lidar_filter_results_.back, lidar_filter_results_.left, lidar_filter_results_.right};
         msg_intersect.data = {lidar_filter_intersect_results_.left, lidar_filter_intersect_results_.right};
         
-        if (dt > 400e-3 && !first_run_) {
+        if (dt > 175e-3 && !first_run_) {
             RCLCPP_ERROR(get_logger(), "Last lidar message received %lf seconds ago",dt);
             msg.data[1] = std::numeric_limits<double>::quiet_NaN();
         }
@@ -101,7 +101,7 @@ namespace algorithms {
                 continue;
             }
         }*/
-            constexpr float angle_range = 45 * M_PI / 180; // 45°
+            constexpr float angle_range = 25 * M_PI / 180; // 45°
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;

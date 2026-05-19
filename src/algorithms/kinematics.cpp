@@ -1,6 +1,7 @@
 #include "kinematics.hpp"
 
 #include <cmath>
+#include <iostream>
 
 namespace algorithms {
 
@@ -46,6 +47,8 @@ namespace algorithms {
         // convert ticks to distance
         float d_L = float(delta_l) * M_PI * wheel_radius_ / TPR_;
         float d_R = float(delta_r) * M_PI * wheel_radius_ / TPR_;
+
+        //std::cout << d_L << " , " << d_R << std::endl;
 
         // check for straight motion
         if (fabs(d_R - d_L) < 1e-6f) {
@@ -98,6 +101,12 @@ namespace algorithms {
 
             return Encoders{new_l, new_r};
         }
+    }
+
+    void Kinematics::reset_pose(Encoders encoders) {
+        encoders_ = encoders;
+        encoders_.r = 4294967296 - encoders_.r; 
+        pose_ = {0,0,0};
     }
 
     Coordinates Kinematics::absolute_forward(Encoders last_encoders, Encoders new_encoders) const {

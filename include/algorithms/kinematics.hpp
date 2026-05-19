@@ -47,5 +47,6 @@ namespace algorithms {
         Coordinates forward(Encoders x) const;
         Encoders inverse(Coordinates x) const;
         Coordinates absolute_forward(Encoders last_encoders, Encoders new_encoders) const;
+        void reset_pose(Encoders encoders); //Resets accumulated pose, encoders needed to set new base encoder value
     };
 }

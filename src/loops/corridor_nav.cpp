@@ -4,12 +4,14 @@
 
 namespace loops {
 
+    constexpr float alpha = 0.80;
 
     CorridorNav::CorridorNav() : rclcpp::Node("corridor_nav"),
                         cmd_vel_({0,0}),
                         lidar_vals_({0,0,0,0}),
                         intersection_vals_({0,0,0,0}),
                         yaw_estimate_(0),
+                        yaw_estimate_filtered_(0),
                         line_detection_(0),
                         act_coords_({0,0,0}),
                         encoders_({0, 0}),
@@ -103,6 +105,7 @@ namespace loops {
         auto request = std::make_shared<prp_project::srv::ResetYawTrigger::Request>();
 
         reset_yaw_client_->async_send_request(request);
+        kinematics_.reset_pose(encoders_);
     }
 
     void CorridorNav::button_cmd_handle(
@@ -156,11 +159,24 @@ namespace loops {
     void CorridorNav::yaw_est_callback(std_msgs::msg::Float32::SharedPtr msg) {
 
         yaw_estimate_ = msg->data;
+
+        auto pose = kinematics_.forward(encoders_);
+
+        auto yaw_deg = yaw_estimate_ * 180 / M_PI;
+        auto pose_deg = pose.fi * 180 / M_PI;
+
+        yaw_estimate_filtered_ = yaw_estimate_ + (1.0F - alpha) * (yaw_estimate_ - pose.fi);
+        //RCLCPP_INFO(get_logger(),"Yaw - IMU: %lf Enc: %lf, CF: %lf",yaw_deg,pose_deg,yaw_estimate_filtered_);
     }
 
     
     void CorridorNav::encoders_callback(std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
         encoders_ = {msg->data[0], msg->data[1]};
+
+        if (first_run_) {
+            kinematics_.reset_pose(encoders_);
+            first_run_ = false;
+        }
 
         act_coords_ = kinematics_.absolute_forward(last_encoders_ , encoders_);
         //RCLCPP_INFO(get_logger(), "Distance driven: %lf", std::abs(act_coords_.x));
