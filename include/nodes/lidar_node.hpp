@@ -36,6 +36,7 @@ namespace nodes {
     class LidarNode : public rclcpp::Node {
 
         rclcpp::Time last_lidar_msg_time_;
+        float first_run_;
 
         rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_;

@@ -4,7 +4,8 @@ namespace nodes {
 
 
         LidarNode::LidarNode() : Node("lidar_node"),
-                                last_lidar_msg_time_(0),
+                                last_lidar_msg_time_{0, 0, RCL_ROS_TIME},
+                                first_run_(true),
                                 lidar_filter_results_({0, 0, 0, 0}),
                                 lidar_filter_intersect_results_({0,0,0,0}) {
 
@@ -16,13 +17,15 @@ namespace nodes {
                 rclcpp::SensorDataQoS(),
                 std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
 
-            timer_ = create_wall_timer(130ms,std::bind(&LidarNode::publish,this));
+            timer_ = create_wall_timer(100ms,std::bind(&LidarNode::publish,this));
         }
 
     void LidarNode::subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg) {
 
-        //Force same clock type
-        last_lidar_msg_time_ = rclcpp::Time(msg->header.stamp,this->get_clock()->get_clock_type()); 
+        last_lidar_msg_time_ = this->get_clock()->now();
+
+        if(first_run_)
+            first_run_ = false;
 
         auto angle_start = msg->angle_min;
         auto angle_end = msg->angle_max;
@@ -40,12 +43,12 @@ namespace nodes {
         auto msg = std_msgs::msg::Float32MultiArray();
         auto msg_intersect = std_msgs::msg::Float32MultiArray();
 
-        auto dt = (now() - last_lidar_msg_time_).seconds();        
+        auto dt = (this->get_clock()->now() - last_lidar_msg_time_).seconds();        
 
         msg.data = {lidar_filter_results_.front, lidar_filter_results_.back, lidar_filter_results_.left, lidar_filter_results_.right};
         msg_intersect.data = {lidar_filter_intersect_results_.left, lidar_filter_intersect_results_.right};
         
-        if (dt > 400e-3) {
+        if (dt > 400e-3 && !first_run_) {
             RCLCPP_ERROR(get_logger(), "Last lidar message received %lf seconds ago",dt);
             msg.data[3] = std::numeric_limits<double>::quiet_NaN();
         }
