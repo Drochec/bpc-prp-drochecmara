@@ -5,7 +5,8 @@
 
 namespace nodes {
 
-        LineNode::LineNode() : rclcpp::Node("line_node") {
+        LineNode::LineNode() : rclcpp::Node("line_node"),
+        line_estimator_(0.35) {
 
             publisher_line_discrete_ = create_publisher<std_msgs::msg::UInt8>(Topic::line_estimate_discrete,10);
             //publisher_line_ = create_publisher<std_msgs::msg::Float32>(Topic::line_estimate,10);
@@ -37,16 +38,16 @@ namespace nodes {
         //RCLCPP_INFO(this->get_logger(), "Line pos: %f", estimated_line_pos);
     };
 
-    float LineNode::get_continuous_line_pose() const {
-        return algorithms::LineEstimator::estimate_continuous_line_pose(sensor_vals_);
+    float LineNode::get_continuous_line_pose() {
+        return line_estimator_.estimate_continuous_line_pose(sensor_vals_);
     }
 
-    DiscreteLinePose LineNode::get_discrete_line_pose() const {
-        return algorithms::LineEstimator::estimate_discrete_line_pose(sensor_vals_);
+    DiscreteLinePose LineNode::get_discrete_line_pose() {
+        return line_estimator_.estimate_discrete_line_pose(sensor_vals_);
         
     }
 
-    void LineNode::publish_line_estimate() const {
+    void LineNode::publish_line_estimate() {
         auto msg_line_discrete = std_msgs::msg::UInt8();
         msg_line_discrete.data = static_cast<unsigned char>(get_discrete_line_pose());
         
@@ -61,8 +62,19 @@ namespace nodes {
 
 namespace algorithms {
     DiscreteLinePose LineEstimator::estimate_discrete_line_pose(const SensorNorm& sensor_vals) {
-        auto line_right = sensor_vals.right > treshold;
-        auto line_left = sensor_vals.left > treshold;
+
+        if (first_run_) {
+            smooth_left_ = sensor_vals.left;
+            smooth_right_ = sensor_vals.right;
+            first_run_ = false;
+        }
+        else {
+            smooth_left_ += alpha_ * (sensor_vals.left - smooth_left_);
+            smooth_right_ += alpha_ * (sensor_vals.right - smooth_right_);
+        }
+
+        auto line_right = smooth_right_ > treshold;
+        auto line_left = smooth_left_ > treshold;
 
         if (line_right && line_left) 
             return DiscreteLinePose::LineBoth;
