@@ -3,17 +3,13 @@
 namespace loops {
 
 
-constexpr float forward_speed_corridor = 0.2;
+constexpr float forward_speed_corridor = 0.25;
 constexpr float free_space = 0.43;
-constexpr float intersection_threshold = 0.53;
-constexpr float wall = 0.23;
-constexpr float wall_spacing = 0.15;
-constexpr float exit_centering_error = 0.05;
-constexpr float centering_treshold = 0.18;
+constexpr float intersection_threshold = 0.57;
+constexpr float wall = 0.28;
+constexpr float centering_treshold = 0.19;
 constexpr float intersection_advance_distance = 0.25;  // 15cm in meters
-constexpr float wall_avoidance_threshold = 0.18;
-constexpr float wall_avoidance_max_yaw_error = 0.35;
-constexpr float bias_gain = 8;
+constexpr float bias_gain = 5;
 
     void CorridorNav::state_machine() {
 
@@ -35,7 +31,9 @@ constexpr float bias_gain = 8;
 
         //Bias the yaw error if too close to a wall
         float error_bias_left = bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
+        error_bias_left += bias_gain*(std::max(-intersection_vals_.left+centering_treshold, 0.0F));
         float error_bias_right = bias_gain*(std::max(-lidar_vals_.right+centering_treshold,0.0F));
+        error_bias_right += bias_gain*(std::max(-intersection_vals_.right+centering_treshold,0.0F));
         //RCLCPP_INFO(get_logger(),"Yaw Error: %lf", error_yaw);
 
         //RCLCPP_INFO(get_logger(), "Right B: %lf Left B: %lf",error_bias_right,error_bias_left);
@@ -51,7 +49,7 @@ constexpr float bias_gain = 8;
                     break;
                 }
                 else {
-                    last_encoders_ = encoders_;
+                    kinematics_.reset_pose(encoders_);
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                 }
 
@@ -60,7 +58,7 @@ constexpr float bias_gain = 8;
                 if ((lidar_vals_.front < wall)) {
                         cmd_vel_ = {0, 0};
                         state_ = corridor_state::INTERSECTION_ADVANCE;
-                        last_encoders_ = encoders_;
+                        kinematics_.reset_pose(encoders_);
                         RCLCPP_INFO(get_logger(),"Path blocked");
                         break;
                     }
@@ -69,7 +67,7 @@ constexpr float bias_gain = 8;
                     if (intersection_vals_.left > intersection_threshold || intersection_vals_.right > intersection_threshold) {
                         state_ = corridor_state::INTERSECTION_ADVANCE;
                         //last_coords_ = coords_;
-                        last_encoders_ = encoders_;
+                        kinematics_.reset_pose(encoders_);
                         RCLCPP_INFO(get_logger(),"Lidar reports intersection ahead");
                         break;
                     }
@@ -114,8 +112,8 @@ constexpr float bias_gain = 8;
                 // Space in front -> continue
                 else if (lidar_vals_.front > wall){
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
-                    set_yaw_ = yaw_estimate_;
-                    last_encoders_ = encoders_;
+                    //set_yaw_ = set_yaw_ - error_bias_left + error_bias_right;
+                    kinematics_.reset_pose(encoders_);
                     RCLCPP_INFO(get_logger(),"Continuing forward");
                     break;
                 }
@@ -137,7 +135,7 @@ constexpr float bias_gain = 8;
                 
 
             case corridor_state::INTERSECTION_ADVANCE:
-                //RCLCPP_INFO(get_logger(),"%f",act_coords_.x);
+                //RCLCPP_INFO(get_logger(),"Driven: %f",pose_.x);
                 // Move forward while tracking distance via encoders
                 cmd_vel_.v = forward_speed_corridor;
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);  // Go straight, no rotation
@@ -146,8 +144,9 @@ constexpr float bias_gain = 8;
 
                 //Reset driven distance when going over a black line = intersection edge
                 if (line_detection_ > 0) {
-                    last_encoders_ = encoders_;
-                    //RCLCPP_INFO(get_logger(),"Line detected - Distance Reset");
+                    kinematics_.reset_pose(encoders_);
+                    RCLCPP_INFO(get_logger(),"Line detected - Distance Reset");
+                    break;
                 }
 
                 if (lidar_vals_.front < free_space){
@@ -155,17 +154,15 @@ constexpr float bias_gain = 8;
                         cmd_vel_ = {0.0, 0};
                         state_ = corridor_state::INTERSECTION;
                         send_reset_yaw();
-                        last_encoders_ = encoders_;
                         RCLCPP_INFO(get_logger(),"Intersection entered");
                     }
                 } 
-                else if (std::abs(act_coords_.x) >= 20e-2) { 
+                else if (std::abs(pose_.x) >= 15e-2) { 
 
                         cmd_vel_ = {0.0, 0};
                         state_ = corridor_state::INTERSECTION;
-                        last_encoders_ = encoders_;
                         send_reset_yaw();
-                        RCLCPP_INFO(get_logger(),"Intersection entered");
+                        RCLCPP_INFO(get_logger(),"Intersection entered based on distance driven");
                 }
                 break;
                 
@@ -174,12 +171,13 @@ constexpr float bias_gain = 8;
                 cmd_vel_.v = forward_speed_corridor;   
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
 
-                //RCLCPP_INFO(get_logger(), "Distance driven: %lf", std::abs(act_coords_.x));
+                //RCLCPP_INFO(get_logger(), "Distance driven: %lf", pose_.x);
 
                 // Condition: walls detected or moved 25 cm
                 if ((lidar_vals_.left < free_space && lidar_vals_.right < free_space) || 
-                    std::abs(act_coords_.x) >= 30e-2) {
+                    (pose_.x >= 30e-2)) {
 
+                    kinematics_.reset_pose(encoders_);
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                 
                 }
@@ -195,7 +193,7 @@ constexpr float bias_gain = 8;
                 cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if (abs(error_yaw) <= 0.01) {
+                if (abs(error_yaw) <= 0.05) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
@@ -203,7 +201,6 @@ constexpr float bias_gain = 8;
                     set_yaw_ = 0;
                     send_reset_yaw();
                     //last_coords_ = coords_;
-                    last_encoders_ = encoders_;
                     state_ = corridor_state::EXIT_INTERSECTION;
                     RCLCPP_INFO(get_logger(),"Turn complete, exiting");
                 }
@@ -215,7 +212,6 @@ constexpr float bias_gain = 8;
                 cmd_vel_ = {0, 0};
                 set_yaw_ = 0;
                 send_reset_yaw();
-                last_encoders_ = encoders_;
                 pid_yaw_.reset();
                 pid_yaw_turn_.reset();
                 exit_ = algorithms::ArucoID::NONE;

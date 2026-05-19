@@ -50,9 +50,8 @@ namespace loops {
         algorithms::LidarFilterResults lidar_vals_;
         algorithms::LidarFilterResults intersection_vals_;
         float yaw_estimate_;
-        float yaw_estimate_filtered_;
         uint8_t line_detection_;
-        algorithms::Coordinates act_coords_;
+        algorithms::Coordinates pose_;
         algorithms::Encoders encoders_;
         algorithms::Encoders last_encoders_;
 
