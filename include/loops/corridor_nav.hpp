@@ -28,6 +28,13 @@ using namespace std::chrono_literals;
 namespace loops {
 
     constexpr float dt = 10e-3; //20ms between calls
+    constexpr float forward_speed_corridor = 0.25;
+    constexpr float free_space = 0.44;
+    constexpr float intersection_threshold = 0.57;
+    constexpr float wall = 0.28;
+    constexpr float centering_treshold = 0.20;
+    constexpr float intersection_advance_distance = 0.25;  // 15cm in meters
+    constexpr float bias_gain = 5;
 
     enum class corridor_state {
         WAIT,
@@ -38,6 +45,7 @@ namespace loops {
         INTERSECTION_ADVANCE,
         EXIT_INTERSECTION,
         TURNING,
+        PATH_BLOCKED,
         RESET,
     };
 
@@ -64,6 +72,7 @@ namespace loops {
         bool heading_to_exit_;
         rclcpp::Time last_time_;
         bool first_run_;
+        std::array<bool, 4> valid_paths_;
         
         //Algorithms
         algorithms::Kinematics kinematics_;
@@ -120,9 +129,11 @@ namespace loops {
 
         void send_reset_yaw();
 
-        void centering_setup();
-
         bool handle_direction(algorithms::ArucoID& code);
+
+        std::array<bool, 4> check_valid_paths();
+
+        float yaw_from_valid_path(const std::array<bool, 4> valid_paths);
 
     public:
 

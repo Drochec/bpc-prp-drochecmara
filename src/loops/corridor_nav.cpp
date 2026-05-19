@@ -6,6 +6,7 @@ namespace loops {
 
     CorridorNav::CorridorNav() : rclcpp::Node("corridor_nav"),
                         cmd_vel_({0,0}),
+
                         lidar_vals_({0,0,0,0}),
                         intersection_vals_({0,0,0,0}),
                         yaw_estimate_(0),
@@ -13,6 +14,7 @@ namespace loops {
                         pose_({0,0,0}),
                         encoders_({0, 0}),
                         last_encoders_({0,0}),
+
                         state_(corridor_state::WAIT),
                         last_state_(corridor_state::RESET),
                         set_yaw_(0),
@@ -21,9 +23,11 @@ namespace loops {
                         heading_to_exit_(false),
                         last_time_(0),
                         first_run_(true),
+                        valid_paths_({false,false,false,false}),
+
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
                         pid_yaw_(4,0,0,10*loops::dt),
-                        pid_yaw_turn_(6,0.5,3,3*loops::dt),
+                        pid_yaw_turn_(6,0.5,0,3*loops::dt),
                         pid_centering_(3,0,0,3*loops::dt) //thau = 3*dt
         {
 
@@ -103,6 +107,7 @@ namespace loops {
 
         reset_yaw_client_->async_send_request(request);
         kinematics_.reset_pose(encoders_);
+        pose_ = kinematics_.forward(encoders_);
     }
 
     void CorridorNav::button_cmd_handle(

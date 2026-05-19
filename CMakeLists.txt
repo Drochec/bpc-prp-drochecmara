@@ -41,6 +41,7 @@ set(SRC
         ${CMAKE_SOURCE_DIR}/src/algorithms/aruco_detector.cpp
         ${CMAKE_SOURCE_DIR}/src/algorithms/pid.cpp
         ${CMAKE_SOURCE_DIR}/src/loops/corridor_nav_logic.cpp
+        ${CMAKE_SOURCE_DIR}/src/loops/corridor_nav_statemachine.cpp
 
 )
 
