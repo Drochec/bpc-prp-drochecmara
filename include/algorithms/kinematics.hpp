@@ -4,7 +4,7 @@
 namespace algorithms {
 
     float inline constexpr max_speed = 19.5f; //rad/s
-    double inline constexpr wheel_radius = 68.55e-3; //m
+    double inline constexpr wheel_radius = 66e-3; //m
     double inline constexpr wheel_base = 130.00e-3; //m
     int inline constexpr TPR = 585; //Ticks per revolution
 
