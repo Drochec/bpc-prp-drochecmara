@@ -4,6 +4,8 @@
 #include <chrono>
 #include <sensor_msgs/msg/imu.hpp>
 #include "algorithms/planar_imu_integrator.hpp"
+#include "kinematics.hpp"
+#include <std_msgs/msg/u_int32_multi_array.hpp>
 #include "helper.hpp"
 #include <std_msgs/msg/float32.hpp>
 #include "prp_project/srv/calibrate_trigger.hpp"
@@ -23,20 +25,27 @@ namespace nodes {
     class ImuNode : public rclcpp::Node {
     private:
         ImuNodeMode mode_;
+        bool first_run_;
 
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
+        rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr encoder_subscriber_;
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_;
         rclcpp::Service<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_service_;
         rclcpp::Service<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_service_;
 
         algorithms::PlanarImuIntegrator planar_integrator_;
+        algorithms::Kinematics kinematics_;
+        algorithms::Encoders encoders_;
+        algorithms::Coordinates pose_;
+        float yaw_estimate_filtered_;
+
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::TimerBase::SharedPtr calib_timer_;
-
 
         std::vector<float> gyro_calibration_samples_;
 
         void on_imu_msg(const sensor_msgs::msg::Imu::SharedPtr msg);
+        void on_encoder_msg(const std_msgs::msg::UInt32MultiArray::SharedPtr msg);
         void calibrate();
         void integrate();
         void publish_estimate();

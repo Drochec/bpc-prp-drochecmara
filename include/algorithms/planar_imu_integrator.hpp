@@ -7,14 +7,19 @@
 
 namespace algorithms {
 
+    
     class PlanarImuIntegrator {
     public:
 
-        PlanarImuIntegrator() : theta_(0.0f), gyro_offset_(0.0f) {}
+        PlanarImuIntegrator(float alpha) : yaw_filtered_(0.0f), gyro_offset_(0.0f), alpha_(alpha) {}
+        PlanarImuIntegrator() : yaw_filtered_(0.0f), gyro_offset_(0.0f), alpha_(0.90) {}
 
-        // TODO: Call this regularly to integrate gyro_z over time
-        void update(float gyro_z, double dt) {
-            theta_ += (gyro_z-gyro_offset_) * dt;
+        //Integrate using complemtary filtering
+        void update(float gyro_z, float correction_yaw, double dt) {
+            float yaw = yaw_filtered_ + (gyro_z * dt);
+
+            yaw_filtered_ = yaw * alpha_ + (1.0F - alpha_) * correction_yaw;
+
         }
 
         // TODO: Calibrate the gyroscope by computing average from static samples
@@ -24,18 +29,19 @@ namespace algorithms {
 
         // TODO: Return the current estimated yaw
         [[nodiscard]] float getYaw() const {
-            return theta_;
+            return yaw_filtered_;
         }
 
         // TODO: Reset orientation and calibration
         void reset() {
-            theta_ = 0.0f;
+            yaw_filtered_ = 0.0f;
             gyro_offset_ = 0.0f;
         }
 
     private:
-        float theta_;       // Integrated yaw angle (radians)
+        float yaw_filtered_;       // Integrated yaw angle (radians)
         float gyro_offset_; // Estimated gyro bias
+        float alpha_;       // Complementary filter constant, higher means trusts integrated value more
     };
 }
 

@@ -3,13 +3,27 @@
 namespace nodes {
 
     constexpr double imu_dt = 20e-3;
+    constexpr float alpha = 0.90;
 
 
-    ImuNode::ImuNode() : rclcpp::Node("imu_node"), mode_(ImuNodeMode::CALIBRATE) {
+    ImuNode::ImuNode() : rclcpp::Node("imu_node"), 
+    mode_(ImuNodeMode::CALIBRATE), 
+    first_run_(true), 
+    planar_integrator_(alpha),
+    kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
+    encoders_({0,0}),
+    pose_({0,0,0}) {
+
         imu_subscriber_ = create_subscription<sensor_msgs::msg::Imu>(
             Topic::imu,
             3,
             std::bind(&ImuNode::on_imu_msg, this, std::placeholders::_1));
+
+        encoder_subscriber_ =  create_subscription<std_msgs::msg::UInt32MultiArray>(
+            Topic::encoders,
+            3,
+            std::bind(&ImuNode::on_encoder_msg, this, std::placeholders::_1));
+
         publisher_ = create_publisher<std_msgs::msg::Float32>(Topic::yaw_estimate,1);
         timer_ = create_wall_timer(20ms, std::bind(&ImuNode::publish_estimate, this));
         calib_timer_ = create_wall_timer(5s,std::bind(&ImuNode::calibrate, this));
@@ -35,10 +49,23 @@ namespace nodes {
         }
 
         else {
-            planar_integrator_.update(gyro_z,imu_dt);
+            planar_integrator_.update(gyro_z,pose_.fi,imu_dt);
         }
 
     }
+
+    void ImuNode::on_encoder_msg(const std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+        encoders_ = {msg->data[0], msg->data[1]};
+
+        if (first_run_) {
+            kinematics_.reset_pose(encoders_);
+            first_run_ = false;
+            return;
+        }
+
+        pose_ = kinematics_.forward(encoders_);
+    }
+
     void ImuNode::calibrate() {
         planar_integrator_.setCalibration(gyro_calibration_samples_);
         mode_=ImuNodeMode::INTEGRATE;
@@ -67,6 +94,7 @@ namespace nodes {
     void ImuNode::reset_imu() {
         mode_=ImuNodeMode::CALIBRATE;
         planar_integrator_.reset();
+        kinematics_.reset_pose(encoders_);
         calib_timer_->reset();
     }
 
@@ -82,6 +110,7 @@ namespace nodes {
             msg.data = std::numeric_limits<double>::quiet_NaN();
         }
 
+        
         publisher_->publish(msg);
     }
 
@@ -116,6 +145,7 @@ namespace nodes {
             RCLCPP_INFO(get_logger(), "Yaw reset requested");
 
             planar_integrator_.reset();
+            kinematics_.reset_pose(encoders_);
 
             response->success = true;
             response->message = "Yaw reset";
