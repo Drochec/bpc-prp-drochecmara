@@ -29,11 +29,13 @@ namespace nodes {
         rclcpp::TimerBase::SharedPtr coords_pub_timer_;
 
         algorithms::Kinematics kinematics_; //Treba instace jelikoz Kinematics funkce nejsou static - mozna predelat?
-        algorithms::RobotSpeed cmd_vel_; //Nastavena rychlost
+        algorithms::RobotSpeed cmd_vel_; //Commanded velocity - received from topic
+        algorithms::RobotSpeed current_vel_; //Current velocity - used to compute speed ramp
         algorithms::Encoders encoders_; //Prectene hodnoty enkoderu
         algorithms::Coordinates act_coords_;
 
         float distance_driven_;
+        
 
     public:
         // Constructor
