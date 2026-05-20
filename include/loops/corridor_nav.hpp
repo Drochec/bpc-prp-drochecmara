@@ -33,7 +33,7 @@ namespace loops {
     constexpr float intersection_threshold = 0.55;
     constexpr float wall = 0.28;
     constexpr float centering_treshold = 0.20;
-    constexpr float intersection_advance_distance = 0.20; //TODO: Measure length from sensors to wheel axis
+    constexpr float intersection_advance_distance = 0.23; //Distance 15 cm + sensor to wheel base offset 7 cm
     constexpr float bias_gain = 5;
 
     enum class corridor_state {
@@ -92,6 +92,7 @@ namespace loops {
 
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
         rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr publisher_state_;
+        rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_valid_paths_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
         rclcpp::TimerBase::SharedPtr publish_state_timer_;

@@ -27,7 +27,7 @@ namespace loops {
 
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
                         pid_yaw_(4,0,0,10*loops::dt),
-                        pid_yaw_turn_(6,0.5,0,3*loops::dt),
+                        pid_yaw_turn_(6,0.5,3,3*loops::dt),
                         pid_centering_(3,0,0,3*loops::dt) //thau = 3*dt
         {
 
@@ -81,6 +81,8 @@ namespace loops {
 
             publisher_state_ = create_publisher<std_msgs::msg::UInt8>(Topic::state,1);
 
+            publisher_valid_paths_ = create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::path,1);
+
             publish_timer_ = create_wall_timer(5ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 
             decision_timer_ = create_wall_timer(10ms, std::bind(&CorridorNav::state_machine,this));
@@ -111,7 +113,7 @@ namespace loops {
 
         reset_yaw_client_->async_send_request(request);
         kinematics_.reset_pose(encoders_);
-        pose_ = kinematics_.forward(encoders_);
+        pose_ = {0,0,0};
     }
 
     void CorridorNav::button_cmd_handle(

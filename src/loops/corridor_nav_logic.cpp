@@ -44,26 +44,33 @@ namespace loops {
     return false;
 }
 
-    std::array<bool, 4> CorridorNav::check_valid_paths(){
+    std::array<bool, 3> CorridorNav::check_valid_paths(){
 
         // Check intersections for availible paths
         RCLCPP_INFO(get_logger(),"Checking for valid paths");
         RCLCPP_INFO(get_logger(),"lidar: %f, %f, %f, %f",lidar_vals_.front,lidar_vals_.back,lidar_vals_.left,lidar_vals_.right);
         RCLCPP_INFO(get_logger(),"intersection: %f, %f",intersection_vals_.left,intersection_vals_.right);
 
-        std::array<bool, 4> valid_paths = {false,false,false,false};
+        std::array<bool, 3> valid_paths = {false,false,false};
 
         if (lidar_vals_.front > free_space) valid_paths[0] = true;
-        if (lidar_vals_.back> free_space) valid_paths[1] = true;
-        if (lidar_vals_.left > free_space) valid_paths[2] = true;
-        if (lidar_vals_.back > free_space) valid_paths[3] = true;
+        if (lidar_vals_.left > free_space) valid_paths[1] = true;
+        if (lidar_vals_.right > free_space) valid_paths[2] = true;
+
+        auto msg = std_msgs::msg::UInt8MultiArray();
+
+        for (auto const& path : valid_paths) {
+            msg.data.push_back(static_cast<uint8_t>(path));
+        }
+
+        publisher_valid_paths_->publish(msg);
 
         return valid_paths;
     }
 
-    float CorridorNav::yaw_from_valid_path(const std::array<bool, 4> valid_paths) {
+    float CorridorNav::yaw_from_valid_path(const std::array<bool, 3> valid_paths) {
         // Turn right
-        if(valid_paths[3]) {
+        if(valid_paths[2]) {
             RCLCPP_INFO(get_logger(),"Going right");
             return -M_PI/2;
         }
@@ -74,7 +81,7 @@ namespace loops {
         }
      
         //Turn left
-        if (valid_paths[2]){
+        if (valid_paths[1]){
             RCLCPP_INFO(get_logger(),"Going left");
             return M_PI/2; 
         }

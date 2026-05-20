@@ -32,6 +32,7 @@ namespace Topic {
 
     //Corridor Navigation
     const std::string state = "/controller/state";
+    const std::string path = "/controller/valid_paths";
 
 };
 

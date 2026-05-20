@@ -3,7 +3,10 @@
 
 namespace nodes {
 
-    IoNode::IoNode() : rclcpp::Node("io_node"), button_pressed_(0), received_state_(loops::corridor_state::WAIT),
+    IoNode::IoNode() : rclcpp::Node("io_node"), button_pressed_(0), 
+    state_(IoNodeState::STATE),
+    received_state_(loops::corridor_state::WAIT),
+    received_paths_({false,false,false}),
     LED_({0,0,0,0,0,0,0,0,0,0,0,0})
         {
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 10);
@@ -16,7 +19,11 @@ namespace nodes {
 
             state_subscriber_ = create_subscription<std_msgs::msg::UInt8>(Topic::state, 1, std::bind(&IoNode::state_cb, this, std::placeholders::_1));
 
-            timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::rgb_timer_callback, this));
+            path_subscriber_ = create_subscription<std_msgs::msg::UInt8MultiArray>(Topic::path, 1, std::bind(&IoNode::path_cb, this, std::placeholders::_1));
+
+            timer_ = this->create_wall_timer(100ms,std::bind(&IoNode::rgb_timer_callback, this));
+
+            path_display_timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::end_display_path, this));
 
             button_cmd_client_ = create_client<prp_project::srv::ButtonCmd>("button_cmd");
         }
@@ -40,6 +47,17 @@ namespace nodes {
         received_state_ = static_cast<loops::corridor_state>(msg->data);
     }
 
+    void IoNode::path_cb(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
+
+        for (size_t i = 0; i < msg->data.size(); i++) {
+            received_paths_[i] = static_cast<bool>(msg->data[i]);
+        }
+
+        state_ = IoNodeState::PATH;
+        path_display_timer_->reset();
+
+    }
+
     void IoNode::send_button_cmd(unsigned int button) {
         auto request = std::make_shared<prp_project::srv::ButtonCmd::Request>();
 
@@ -61,9 +79,21 @@ namespace nodes {
 
     void IoNode::rgb_timer_callback() {
         auto msg = std_msgs::msg::UInt8MultiArray();
-        
         msg.data.reserve(12);
 
+        if (state_ == IoNodeState::PATH){
+            LED_[0] = colors::OFF;
+            LED_[1] = received_paths_[2] ? colors::WHITE : colors::OFF;
+            LED_[2] = received_paths_[0] ? colors::WHITE : colors::OFF;
+            LED_[3] = received_paths_[1] ? colors::WHITE : colors::OFF;
+        }
+        else {  
+            LED_[0] = state_to_color();
+            LED_[1] = colors::OFF;
+            LED_[2] = colors::OFF;
+            LED_[3] = colors::OFF;
+        }
+        
         for (const auto& led : LED_) {
             msg.data.insert(msg.data.end(), led.begin(), led.end());
         }
@@ -78,16 +108,21 @@ namespace nodes {
     switch (received_state_) {
         case loops::corridor_state::WAIT:                  return colors::WHITE;
         case loops::corridor_state::CALIBRATION:           return colors::BLUE;
-        case loops::corridor_state::CORRIDOR_FOLLOWING:    return colors::GREEN;
-        case loops::corridor_state::INTERSECTION:          return colors::YELLOW;
-        case loops::corridor_state::INTERSECTION_ADVANCE:  return colors::ORANGE;
+        case loops::corridor_state::CORRIDOR_FOLLOWING:    return colors::YELLOW;
+        case loops::corridor_state::INTERSECTION:          return colors::GREEN;
+        case loops::corridor_state::INTERSECTION_ADVANCE:  return colors::RED;
         case loops::corridor_state::EXIT_INTERSECTION:     return colors::CYAN;
         case loops::corridor_state::TURNING:               return colors::MAGENTA;
-        case loops::corridor_state::RESET:                 return colors::RED;
     }
 
     return colors::OFF;
-}
+    }
+
+    void IoNode::end_display_path(){
+        state_ = IoNodeState::STATE;
+        path_display_timer_->cancel();
+    }
+
 
 
 
