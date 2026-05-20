@@ -82,6 +82,8 @@ namespace loops{
                 //If only one valid paths (not counting back) -> not an intersection
                 if (std::count(valid_paths_.begin(),valid_paths_.end(), true) <= 1) {
 
+                    RCLCPP_INFO(get_logger(), "Only one valid path, skipping tags");
+
                     set_yaw_ = yaw_estimate_ + yaw_from_valid_path(valid_paths_);
 
                     if (set_yaw_ == yaw_estimate_) {//Continuing straight
@@ -91,7 +93,6 @@ namespace loops{
                         break;
                     }
 
-                    RCLCPP_INFO(get_logger(), "Only one valid path, skipping tags");
                     state_ = corridor_state::TURNING;
                     RCLCPP_INFO(get_logger(),"Turning");
                     kinematics_.reset_pose(encoders_);
@@ -130,7 +131,7 @@ namespace loops{
                 // Once 15cm traveled or about to hit a wall, proceed to turn based on decision made above
 
                 //Reset driven distance when going over a black line = intersection edge
-                if (line_detection_ > 0) {
+                if (line_detection_ == 3) {
                     kinematics_.reset_pose(encoders_);
                     pose_ = {0,0,0};
                     RCLCPP_INFO(get_logger(),"Line detected - Distance Reset");
@@ -156,13 +157,13 @@ namespace loops{
                 
 
             case corridor_state::EXIT_INTERSECTION:
-                cmd_vel_.v = forward_speed_corridor;   
+                cmd_vel_.v = exit_speed; 
                 cmd_vel_.w = pid_yaw_.step(error_yaw, dt);
 
                 //RCLCPP_INFO(get_logger(), "Distance driven: %lf", pose_.x);
 
                 // Condition: walls detected or moved 25 cm
-                if ((lidar_vals_.left < free_space && lidar_vals_.right < free_space) || 
+                if ((lidar_vals_.left < free_space && lidar_vals_.right < free_space && pose_.x >= 15e-2) || 
                     (pose_.x >= 30e-2)) {
 
                     kinematics_.reset_pose(encoders_);
@@ -183,7 +184,7 @@ namespace loops{
                 cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if ((abs(error_yaw) <= 0.03) || ((now() - turn_start_time_).seconds() >= 3)) {
+                if ((abs(error_yaw) <= 0.02) || ((now() - turn_start_time_).seconds() >= 2)) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();

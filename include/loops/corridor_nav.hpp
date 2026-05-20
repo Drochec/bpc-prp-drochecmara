@@ -28,12 +28,15 @@ using namespace std::chrono_literals;
 namespace loops {
 
     constexpr float dt = 10e-3; //20ms between calls
-    constexpr float forward_speed_corridor = 0.25;
+    constexpr float forward_speed_corridor = 0.27;
+    constexpr float exit_speed = 0.19;
+    //constexpr float forward_speed_corridor = 0.37;
     constexpr float free_space = 0.43;
     constexpr float intersection_threshold = 0.55;
     constexpr float wall = 0.28;
+    //constexpr float wall = 0.30;
     constexpr float centering_treshold = 0.20;
-    constexpr float intersection_advance_distance = 0.23; //Distance 15 cm + sensor to wheel base offset 7 cm
+    constexpr float intersection_advance_distance = 0.21; //Distance 15 cm + sensor to wheel base offset 7 cm
     constexpr float bias_gain = 5;
 
     enum class corridor_state {

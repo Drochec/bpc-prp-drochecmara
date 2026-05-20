@@ -113,6 +113,7 @@ namespace nodes {
         case loops::corridor_state::INTERSECTION_ADVANCE:  return colors::RED;
         case loops::corridor_state::EXIT_INTERSECTION:     return colors::CYAN;
         case loops::corridor_state::TURNING:               return colors::MAGENTA;
+        case loops::corridor_state::RESET:                 return colors::ORANGE;
     }
 
     return colors::OFF;
