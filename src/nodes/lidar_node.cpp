@@ -166,7 +166,7 @@ namespace algorithms {
         // Compute the angular step between each range reading
         auto angle_step = (angle_end - angle_start) / points.size();
 
-        constexpr float intersect_range =  25 * M_PI / 180;
+        constexpr float intersect_range =  15 * M_PI / 180;
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;
