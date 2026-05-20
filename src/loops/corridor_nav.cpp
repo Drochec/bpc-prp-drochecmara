@@ -27,26 +27,26 @@ namespace loops {
                         turn_start_time_(0),
 
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
-                        pid_yaw_(4,0,0,10*loops::dt),
-                        pid_yaw_turn_(6,0.5,3,3*loops::dt),
+                        pid_yaw_(6,0,1,3*loops::dt),
+                        pid_yaw_turn_(8,0.5,3,3*loops::dt),
                         pid_centering_(3,0,0,3*loops::dt) //thau = 3*dt
         {
 
             subscriber_range_est_ = create_subscription<std_msgs::msg::Float32MultiArray>(
                 Topic::range_estimate,
-                3,
+                1,
                 std::bind(&CorridorNav::range_est_callback,this, std::placeholders::_1)
             );
 
             subscriber_intersection_range_ = create_subscription<std_msgs::msg::Float32MultiArray>(
                 Topic::intersect_estimate,
-                3,
+                1,
                 std::bind(&CorridorNav::intersection_range_callback,this, std::placeholders::_1)
             );
 
             subscriber_yaw_est_ = create_subscription<std_msgs::msg::Float32>(
                 Topic::yaw_estimate,
-                3,
+                1,
                 std::bind(&CorridorNav::yaw_est_callback,this, std::placeholders::_1)
             );
 
@@ -59,13 +59,13 @@ namespace loops {
             
             subscriber_line_ = create_subscription<std_msgs::msg::UInt8>(
                 Topic::line_estimate_discrete,
-                5,
+                1,
                 std::bind(&CorridorNav::line_callback, this, std::placeholders::_1)
             );
 
             subscriber_tag_detections_ = create_subscription<std_msgs::msg::UInt8MultiArray>(
                 Topic::tag_detections,
-                3,
+                1,
                 std::bind(&CorridorNav::tag_detections_callback, this, std::placeholders::_1)
             );
             /*
@@ -86,7 +86,7 @@ namespace loops {
 
             publish_timer_ = create_wall_timer(5ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 
-            decision_timer_ = create_wall_timer(10ms, std::bind(&CorridorNav::state_machine,this));
+            decision_timer_ = create_wall_timer(15ms, std::bind(&CorridorNav::state_machine,this));
 
             publish_state_timer_ = create_wall_timer(35ms, std::bind(&CorridorNav::publish_state, this));
 

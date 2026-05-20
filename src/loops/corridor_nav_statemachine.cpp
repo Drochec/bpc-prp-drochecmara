@@ -22,11 +22,14 @@ namespace loops{
 
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
+        float bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 8 : 5;
+        float intersect_bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 5 : 3;
+
         //Bias the yaw error if too close to a wall
         float error_bias_left = bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
-        error_bias_left += 3*(std::max(-intersection_vals_.left+centering_treshold, 0.0F));
+        error_bias_left += intersect_bias_gain*(std::max(-intersection_vals_.left+centering_treshold, 0.0F));
         float error_bias_right = bias_gain*(std::max(-lidar_vals_.right+centering_treshold,0.0F));
-        error_bias_right += 3*(std::max(-intersection_vals_.right+centering_treshold,0.0F));
+        error_bias_right += intersect_bias_gain*(std::max(-intersection_vals_.right+centering_treshold,0.0F));
         //RCLCPP_INFO(get_logger(),"Yaw Error: %lf", error_yaw);
 
         //RCLCPP_INFO(get_logger(), "Right B: %lf Left B: %lf",error_bias_right,error_bias_left);
@@ -162,9 +165,17 @@ namespace loops{
 
                 //RCLCPP_INFO(get_logger(), "Distance driven: %lf", pose_.x);
 
+                if ((lidar_vals_.front < wall)) {
+                        cmd_vel_ = {0, 0};
+                        state_ = corridor_state::INTERSECTION;
+                        kinematics_.reset_pose(encoders_);
+                        pose_ = {0,0,0};
+                        RCLCPP_INFO(get_logger(),"Path blocked while exiting intersection");
+                        break;
+                }
                 // Condition: walls detected or moved 25 cm
-                if ((lidar_vals_.left < free_space && lidar_vals_.right < free_space && pose_.x >= 15e-2) || 
-                    (pose_.x >= 30e-2)) {
+                if ((lidar_vals_.left < free_space && lidar_vals_.right < free_space && pose_.x >= 5e-2) || 
+                    (pose_.x >= intersection_exit_distance)) {
 
                     kinematics_.reset_pose(encoders_);
                     pose_ = {0,0,0};
@@ -184,7 +195,7 @@ namespace loops{
                 cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if ((abs(error_yaw) <= 0.02) || ((now() - turn_start_time_).seconds() >= 2)) {
+                if ((abs(error_yaw) <= 0.015) || ((now() - turn_start_time_).seconds() >= 2)) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
@@ -194,6 +205,7 @@ namespace loops{
                     //last_coords_ = coords_;
                     state_ = corridor_state::EXIT_INTERSECTION;
                     RCLCPP_INFO(get_logger(),"Turn complete, exiting");
+                    break;
                 }
 
                 break;
