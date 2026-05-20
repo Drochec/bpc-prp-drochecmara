@@ -23,7 +23,7 @@ namespace loops {
                         heading_to_exit_(false),
                         last_time_(0),
                         first_run_(true),
-                        valid_paths_({false,false,false,false}),
+                        valid_paths_({false,false,false}),
 
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
                         pid_yaw_(4,0,0,10*loops::dt),
@@ -79,9 +79,13 @@ namespace loops {
 
             publisher_cmd_vel_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::cmd_vel,1);
 
+            publisher_state_ = create_publisher<std_msgs::msg::UInt8>(Topic::state,1);
+
             publish_timer_ = create_wall_timer(5ms, std::bind(&CorridorNav::publish_cmd_vel,this));
 
             decision_timer_ = create_wall_timer(10ms, std::bind(&CorridorNav::state_machine,this));
+
+            publish_state_timer_ = create_wall_timer(35ms, std::bind(&CorridorNav::publish_state, this));
 
             calibrate_client_ = create_client<prp_project::srv::CalibrateTrigger>("calibrate");
             reset_yaw_client_ = create_client<prp_project::srv::ResetYawTrigger>("reset_yaw");
@@ -144,6 +148,14 @@ namespace loops {
         msg.data = {cmd_vel_.v,cmd_vel_.w};
 
         publisher_cmd_vel_->publish(msg);
+    }
+
+    void CorridorNav::publish_state() {
+        auto msg = std_msgs::msg::UInt8();
+
+        msg.data = static_cast<uint8_t>(state_);
+
+        publisher_state_->publish(msg);
     }
 
     void CorridorNav::range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg) {

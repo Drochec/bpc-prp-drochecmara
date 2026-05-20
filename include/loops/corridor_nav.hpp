@@ -29,11 +29,11 @@ namespace loops {
 
     constexpr float dt = 10e-3; //20ms between calls
     constexpr float forward_speed_corridor = 0.25;
-    constexpr float free_space = 0.44;
-    constexpr float intersection_threshold = 0.57;
+    constexpr float free_space = 0.43;
+    constexpr float intersection_threshold = 0.55;
     constexpr float wall = 0.28;
     constexpr float centering_treshold = 0.20;
-    constexpr float intersection_advance_distance = 0.25;  // 15cm in meters
+    constexpr float intersection_advance_distance = 0.20; //TODO: Measure length from sensors to wheel axis
     constexpr float bias_gain = 5;
 
     enum class corridor_state {
@@ -45,7 +45,6 @@ namespace loops {
         INTERSECTION_ADVANCE,
         EXIT_INTERSECTION,
         TURNING,
-        PATH_BLOCKED,
         RESET,
     };
 
@@ -72,7 +71,7 @@ namespace loops {
         bool heading_to_exit_;
         rclcpp::Time last_time_;
         bool first_run_;
-        std::array<bool, 4> valid_paths_;
+        std::array<bool, 3> valid_paths_;
         
         //Algorithms
         algorithms::Kinematics kinematics_;
@@ -92,8 +91,10 @@ namespace loops {
 
 
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
+        rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr publisher_state_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
+        rclcpp::TimerBase::SharedPtr publish_state_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
 
 
@@ -103,6 +104,8 @@ namespace loops {
 
 
         void publish_cmd_vel();
+
+        void publish_state();
 
         void range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
 
@@ -131,9 +134,9 @@ namespace loops {
 
         bool handle_direction(algorithms::ArucoID& code);
 
-        std::array<bool, 4> check_valid_paths();
+        std::array<bool, 3> check_valid_paths();
 
-        float yaw_from_valid_path(const std::array<bool, 4> valid_paths);
+        float yaw_from_valid_path(const std::array<bool, 3> valid_paths);
 
     public:
 
