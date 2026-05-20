@@ -83,15 +83,16 @@ namespace nodes {
 
         if (state_ == IoNodeState::PATH){
             LED_[0] = colors::OFF;
-            LED_[1] = received_paths_[2] ? colors::WHITE : colors::OFF;
-            LED_[2] = received_paths_[0] ? colors::WHITE : colors::OFF;
-            LED_[3] = received_paths_[1] ? colors::WHITE : colors::OFF;
+            LED_[2] = received_paths_[2] ? colors::WHITE : colors::OFF;
+            LED_[3] = received_paths_[0] ? colors::WHITE : colors::OFF;
+            LED_[2] = received_paths_[1] ? colors::WHITE : colors::OFF;
         }
         else {  
             LED_[0] = state_to_color();
             LED_[1] = colors::OFF;
             LED_[2] = colors::OFF;
             LED_[3] = colors::OFF;
+
         }
         
         for (const auto& led : LED_) {
