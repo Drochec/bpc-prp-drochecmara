@@ -24,6 +24,7 @@ namespace loops {
                         last_time_(0),
                         first_run_(true),
                         valid_paths_({false,false,false}),
+                        turn_start_time_(0),
 
                         kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR),
                         pid_yaw_(4,0,0,10*loops::dt),

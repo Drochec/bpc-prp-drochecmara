@@ -72,6 +72,7 @@ namespace loops {
         rclcpp::Time last_time_;
         bool first_run_;
         std::array<bool, 3> valid_paths_;
+        rclcpp::Time turn_start_time_;
         
         //Algorithms
         algorithms::Kinematics kinematics_;

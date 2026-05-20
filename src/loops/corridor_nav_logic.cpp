@@ -12,6 +12,9 @@ namespace loops {
                 set_yaw_ = yaw_estimate_ - M_PI/2;
                 state_ = corridor_state::TURNING;
                 code = algorithms::ArucoID::NONE;
+                kinematics_.reset_pose(encoders_);
+                pose_ = {0,0,0};
+                turn_start_time_ = now();
                 RCLCPP_INFO(get_logger(), "Going right based on tag");
                 return true;
             }
@@ -22,6 +25,9 @@ namespace loops {
                 set_yaw_ = yaw_estimate_ + M_PI/2;
                 state_ = corridor_state::TURNING; 
                 code = algorithms::ArucoID::NONE;
+                kinematics_.reset_pose(encoders_);
+                pose_ = {0,0,0};
+                turn_start_time_ = now();
                 RCLCPP_INFO(get_logger(), "Going left based on tag");
                 return true;
             }
@@ -32,9 +38,11 @@ namespace loops {
                 (lidar_vals_.left > free_space ||
                  lidar_vals_.right > free_space)) {
 
-                set_yaw_ = yaw_estimate_;
+                //set_yaw_ = yaw_estimate_;
                 state_ = corridor_state::CORRIDOR_FOLLOWING;
                 code = algorithms::ArucoID::NONE;
+                kinematics_.reset_pose(encoders_);
+                pose_ = {0,0,0};
                 RCLCPP_INFO(get_logger(), "Continuing forward based on tag");
                 return true;
             }
@@ -58,9 +66,10 @@ namespace loops {
         if (lidar_vals_.right > free_space) valid_paths[2] = true;
 
         auto msg = std_msgs::msg::UInt8MultiArray();
+        msg.data.reserve(3);
 
         for (auto const& path : valid_paths) {
-            msg.data.push_back(static_cast<uint8_t>(path));
+            msg.data.push_back(path ? 1 : 0);
         }
 
         publisher_valid_paths_->publish(msg);
