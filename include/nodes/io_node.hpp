@@ -15,7 +15,7 @@ using namespace std::chrono_literals;
 using RGB = std::array<uint8_t, 3>;
 
 namespace colors {
-    constexpr RGB OFF    = {0, 0, 0};
+    constexpr RGB OFF    = {1, 0, 0};
     constexpr RGB WHITE  = {255, 255, 255};
     constexpr RGB RED    = {255, 0, 0};
     constexpr RGB GREEN  = {0, 255, 0};

@@ -4,6 +4,8 @@ namespace loops{
 
 
     void CorridorNav::state_machine() {
+        //RCLCPP_INFO(get_logger(),"Distance driven: %f",pose_.x);
+        //if (line_detection_ > 0) RCLCPP_INFO(get_logger(),"Line detected: %u",line_detection_);
 
         if (std::isnan(lidar_vals_.back)){
             RCLCPP_INFO(get_logger(),"Lidar data lost signal received stopping!");
@@ -22,9 +24,9 @@ namespace loops{
 
         //Bias the yaw error if too close to a wall
         float error_bias_left = bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
-        error_bias_left += bias_gain*(std::max(-intersection_vals_.left+centering_treshold, 0.0F));
+        error_bias_left += 3*(std::max(-intersection_vals_.left+centering_treshold, 0.0F));
         float error_bias_right = bias_gain*(std::max(-lidar_vals_.right+centering_treshold,0.0F));
-        error_bias_right += bias_gain*(std::max(-intersection_vals_.right+centering_treshold,0.0F));
+        error_bias_right += 3*(std::max(-intersection_vals_.right+centering_treshold,0.0F));
         //RCLCPP_INFO(get_logger(),"Yaw Error: %lf", error_yaw);
 
         //RCLCPP_INFO(get_logger(), "Right B: %lf Left B: %lf",error_bias_right,error_bias_left);
@@ -41,6 +43,7 @@ namespace loops{
                 }
                 else {
                     kinematics_.reset_pose(encoders_);
+                    pose_ = {0,0,0};
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                     break;
                 }
@@ -49,19 +52,18 @@ namespace loops{
 
                 if ((lidar_vals_.front < wall)) {
                         cmd_vel_ = {0, 0};
-                        state_ = corridor_state::PATH_BLOCKED;
+                        state_ = corridor_state::INTERSECTION;
                         kinematics_.reset_pose(encoders_);
-                        pose_ = kinematics_.forward(encoders_);
+                        pose_ = {0,0,0};
                         RCLCPP_INFO(get_logger(),"Path blocked");
                         break;
                     }
-                
                 if (lidar_vals_.front >= free_space){        
                     if (intersection_vals_.left > intersection_threshold || intersection_vals_.right > intersection_threshold) {
                         state_ = corridor_state::INTERSECTION_ADVANCE;
                         //last_coords_ = coords_;
                         kinematics_.reset_pose(encoders_);
-                        pose_ = kinematics_.forward(encoders_);
+                        pose_ = {0,0,0};
                         RCLCPP_INFO(get_logger(),"Lidar reports intersection ahead");
                         break;
                     }
@@ -73,51 +75,49 @@ namespace loops{
 
                 break;
 
-            case corridor_state::PATH_BLOCKED:
-                
+            case corridor_state::INTERSECTION:
+
                 valid_paths_ = check_valid_paths();
                 
-                //If only one valid path -> not an intersection
-                if (std::count(valid_paths_.begin(),valid_paths_.end(), true) == 1) {
+                //If only one valid paths (not counting back) -> not an intersection
+                if (std::count(valid_paths_.begin(),valid_paths_.end(), true) <= 1) {
 
                     set_yaw_ = yaw_estimate_ + yaw_from_valid_path(valid_paths_);
 
-                    if (set_yaw_ == yaw_estimate_) { //Should not happen but in case
+                    if (set_yaw_ == yaw_estimate_) {//Continuing straight
                         state_ = corridor_state::CORRIDOR_FOLLOWING;
                         kinematics_.reset_pose(encoders_);
+                        pose_ = {0,0,0};
                         break;
                     }
 
+                    RCLCPP_INFO(get_logger(), "Only one valid path, skipping tags");
                     state_ = corridor_state::TURNING;
+                    RCLCPP_INFO(get_logger(),"Turning");
+                    kinematics_.reset_pose(encoders_);
+                    pose_ = {0,0,0};
+                    turn_start_time_ = now();
                     break;
                 }
 
-                state_ = corridor_state::INTERSECTION;
+                if (handle_direction(treasure_)) break;
 
-            case corridor_state::INTERSECTION:
+                if (handle_direction(exit_)) break;
 
+                set_yaw_= yaw_estimate_ + yaw_from_valid_path(valid_paths_);
 
-                //turn_set_ = false;
-                if (!heading_to_exit_) {
-                    if (handle_direction(treasure_)) {
-                        heading_to_exit_ = true;
-                        RCLCPP_INFO(get_logger(), "Treasure direction handled, switching to exit");
+                if (set_yaw_ == yaw_estimate_) { //Should not happen but in case
+                        state_ = corridor_state::CORRIDOR_FOLLOWING;
+                        kinematics_.reset_pose(encoders_);
+                        pose_ = {0,0,0};
                         break;
-                    }
                 }
-
-                if (heading_to_exit_) {
-                    if (handle_direction(exit_)) {
-                        RCLCPP_INFO(get_logger(), "Exit direction handled");
-                        break;
-                    }
-                }
-
-                
 
                 state_ = corridor_state::TURNING;
                 RCLCPP_INFO(get_logger(),"Turning");
                 kinematics_.reset_pose(encoders_);
+                pose_ = {0,0,0};
+                turn_start_time_ = now();
                 break;
                 
 
@@ -132,7 +132,7 @@ namespace loops{
                 //Reset driven distance when going over a black line = intersection edge
                 if (line_detection_ > 0) {
                     kinematics_.reset_pose(encoders_);
-                    pose_ = kinematics_.forward(encoders_);
+                    pose_ = {0,0,0};
                     RCLCPP_INFO(get_logger(),"Line detected - Distance Reset");
                     break;
                 }
@@ -145,7 +145,7 @@ namespace loops{
                         RCLCPP_INFO(get_logger(),"Intersection entered");
                     }
                 } 
-                else if (std::abs(pose_.x) >= 15e-2) { 
+                else if (std::abs(pose_.x) >= intersection_advance_distance) { 
 
                         RCLCPP_INFO(get_logger(),"Intersection entered based on distance driven: %f",pose_.x);
                         cmd_vel_ = {0.0, 0};
@@ -166,6 +166,7 @@ namespace loops{
                     (pose_.x >= 30e-2)) {
 
                     kinematics_.reset_pose(encoders_);
+                    pose_ = {0,0,0};
                     state_ = corridor_state::CORRIDOR_FOLLOWING;
                     RCLCPP_INFO(get_logger(),"Exit complete");
                 
@@ -182,7 +183,7 @@ namespace loops{
                 cmd_vel_.w = pid_yaw_turn_.step(error_yaw, dt);
                 
 
-                if (abs(error_yaw) <= 0.04) {
+                if ((abs(error_yaw) <= 0.03) || ((now() - turn_start_time_).seconds() >= 3)) {
 
                     cmd_vel_ = {0.0, 0};
                     pid_yaw_.reset();
