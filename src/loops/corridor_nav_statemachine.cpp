@@ -4,6 +4,7 @@ namespace loops{
 
 
     void CorridorNav::state_machine() {
+        rclcpp::Time start_time = now();
         //RCLCPP_INFO(get_logger(),"Distance driven: %f",pose_.x);
         //if (line_detection_ > 0) RCLCPP_INFO(get_logger(),"Line detected: %u",line_detection_);
 
@@ -22,8 +23,8 @@ namespace loops{
 
         auto error_yaw = set_yaw_ - yaw_estimate_;
 
-        float bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 8 : 5;
-        float intersect_bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 5 : 3;
+        float bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 5 : 5;
+        float intersect_bias_gain = (state_ == corridor_state::EXIT_INTERSECTION) ? 3 : 3;
 
         //Bias the yaw error if too close to a wall
         float error_bias_left = bias_gain*(std::max(-lidar_vals_.left+centering_treshold,0.0F)) ;
@@ -227,5 +228,7 @@ namespace loops{
 
         }
 
+    auto diff = (now()- start_time).seconds() * 1e3;
+    if (diff >= 3) RCLCPP_WARN(get_logger(),"Loop execution took: %lf",diff);
     }
 }

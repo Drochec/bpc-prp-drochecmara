@@ -9,7 +9,7 @@ namespace nodes {
     received_paths_({false,false,false}),
     LED_({0,0,0,0,0,0,0,0,0,0,0,0})
         {
-            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 10);
+            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(Topic::set_rgb_leds, 1);
 
             subscriber_ = this->create_subscription<std_msgs::msg::UInt8>(
                 Topic::buttons,
@@ -21,9 +21,11 @@ namespace nodes {
 
             path_subscriber_ = create_subscription<std_msgs::msg::UInt8MultiArray>(Topic::path, 1, std::bind(&IoNode::path_cb, this, std::placeholders::_1));
 
-            timer_ = this->create_wall_timer(100ms,std::bind(&IoNode::rgb_timer_callback, this));
+            line_estimate_subscriber_ = create_subscription<std_msgs::msg::UInt8>(Topic::line_estimate_discrete, 1, std::bind(&IoNode::line_cb, this, std::placeholders::_1));
 
-            path_display_timer_ = this->create_wall_timer(500ms,std::bind(&IoNode::end_display_path, this));
+            timer_ = this->create_wall_timer(5ms,std::bind(&IoNode::rgb_timer_callback, this));
+
+            path_display_timer_ = this->create_wall_timer(400ms,std::bind(&IoNode::end_display_path, this));
 
             button_cmd_client_ = create_client<prp_project::srv::ButtonCmd>("button_cmd");
         }
@@ -45,6 +47,10 @@ namespace nodes {
 
     void IoNode::state_cb(const std_msgs::msg::UInt8::SharedPtr msg) {
         received_state_ = static_cast<loops::corridor_state>(msg->data);
+    }
+
+    void IoNode::line_cb(const std_msgs::msg::UInt8::SharedPtr msg) {
+        received_line_estimate_ = msg->data;
     }
 
     void IoNode::path_cb(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
@@ -83,16 +89,38 @@ namespace nodes {
 
         if (state_ == IoNodeState::PATH){
             LED_[0] = colors::OFF;
-            LED_[2] = received_paths_[2] ? colors::WHITE : colors::OFF;
+            LED_[1] = received_paths_[2] ? colors::WHITE : colors::OFF;
             LED_[3] = received_paths_[0] ? colors::WHITE : colors::OFF;
             LED_[2] = received_paths_[1] ? colors::WHITE : colors::OFF;
         }
         else {  
-            LED_[0] = state_to_color();
-            LED_[1] = colors::OFF;
-            LED_[2] = colors::OFF;
-            LED_[3] = colors::OFF;
+/*
+            LED_[0] = colors::RED;
+            LED_[1] = colors::GREEN;
+            LED_[2] = colors::BLUE;
+            LED_[3] = colors::WHITE;
+*/
+            switch(received_line_estimate_) {
+                case 0:
+                    LED_[1] = colors::OFF;
+                    LED_[2] = colors::OFF;
+                    break;
+                case 1:
+                    LED_[2] = colors::ORANGE;
+                    LED_[1] = colors::OFF;
+                    break;
+                case 2:
+                    LED_[2] = colors::OFF;
+                    LED_[1] = colors::ORANGE;
+                    break;
+                case 3:
+                    LED_[1] = colors::ORANGE;
+                    LED_[2] = colors::ORANGE;
+                    break;
+            }
 
+            LED_[0] = state_to_color();
+            LED_[3] = colors::OFF;
         }
         
         for (const auto& led : LED_) {

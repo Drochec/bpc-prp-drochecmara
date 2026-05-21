@@ -4,8 +4,8 @@
 namespace nodes {
 
         constexpr float dt = 2e-3;
-        constexpr float max_linear_accel = 0.75;
-        constexpr float max_angluar_accel = 10;
+        constexpr float max_linear_accel = 0.8;
+        constexpr float max_angluar_accel = 12;
 
         MotorNode::MotorNode() : rclcpp::Node("motor_node"), kinematics_(algorithms::wheel_radius,algorithms::wheel_base,algorithms::TPR), 
         cmd_vel_({0,0}),

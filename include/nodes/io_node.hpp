@@ -39,6 +39,7 @@ namespace nodes {
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscriber_;
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr state_subscriber_;
         rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr path_subscriber_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr line_estimate_subscriber_;
         rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
 
         rclcpp::TimerBase::SharedPtr timer_;
@@ -52,6 +53,7 @@ namespace nodes {
         unsigned int button_pressed_;
         IoNodeState state_;
         loops::corridor_state received_state_; 
+        uint8_t received_line_estimate_; 
         std::array<bool, 3> received_paths_;
         std::array<RGB, 4> LED_;
 
@@ -65,6 +67,8 @@ namespace nodes {
         void state_cb(const std_msgs::msg::UInt8::SharedPtr msg);
 
         void path_cb(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
+
+        void line_cb(const std_msgs::msg::UInt8::SharedPtr msg);
 
         void end_display_path();
 
