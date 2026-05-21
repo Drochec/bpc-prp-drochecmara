@@ -3,7 +3,11 @@
 namespace nodes {
 
 
-        LidarNode::LidarNode() : Node("lidar_node"), lidar_filter_results_({0, 0, 0, 0}) {
+        LidarNode::LidarNode() : Node("lidar_node"),
+                                last_lidar_msg_time_{0, 0, RCL_ROS_TIME},
+                                first_run_(true),
+                                lidar_filter_results_({0, 0, 0, 0}),
+                                lidar_filter_intersect_results_({0,0,0,0}) {
 
             publisher_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::range_estimate,3);
             publisher_intersect_ = create_publisher<std_msgs::msg::Float32MultiArray>(Topic::intersect_estimate,3);
@@ -13,10 +17,15 @@ namespace nodes {
                 rclcpp::SensorDataQoS(),
                 std::bind(&LidarNode::subscriber_callback, this, std::placeholders::_1));
 
-            timer_ = create_wall_timer(25ms,std::bind(&LidarNode::publish,this));
+            timer_ = create_wall_timer(100ms,std::bind(&LidarNode::publish,this));
         }
 
     void LidarNode::subscriber_callback(sensor_msgs::msg::LaserScan::SharedPtr msg) {
+
+        last_lidar_msg_time_ = this->get_clock()->now();
+
+        if(first_run_)
+            first_run_ = false;
 
         auto angle_start = msg->angle_min;
         auto angle_end = msg->angle_max;
@@ -34,10 +43,18 @@ namespace nodes {
         auto msg = std_msgs::msg::Float32MultiArray();
         auto msg_intersect = std_msgs::msg::Float32MultiArray();
 
+        auto dt = (this->get_clock()->now() - last_lidar_msg_time_).seconds();        
+
         msg.data = {lidar_filter_results_.front, lidar_filter_results_.back, lidar_filter_results_.left, lidar_filter_results_.right};
         msg_intersect.data = {lidar_filter_intersect_results_.left, lidar_filter_intersect_results_.right};
+        
+        if (dt > 175e-3 && !first_run_) {
+            RCLCPP_ERROR(get_logger(), "Last lidar message received %lf seconds ago",dt);
+            msg.data[1] = std::numeric_limits<double>::quiet_NaN();
+        }
 
         publisher_->publish(msg);
+        
         publisher_intersect_->publish(msg_intersect);
 
     }
@@ -149,7 +166,7 @@ namespace algorithms {
         // Compute the angular step between each range reading
         auto angle_step = (angle_end - angle_start) / points.size();
 
-        constexpr float intersect_range =  25 * M_PI / 180;
+        constexpr float intersect_range =  15 * M_PI / 180;
 
             for (size_t i = 0; i < points.size(); ++i) {
                 auto angle = angle_start + i * angle_step;

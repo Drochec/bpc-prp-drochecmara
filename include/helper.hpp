@@ -30,6 +30,10 @@ namespace Topic {
     const std::string camera = "/bpc_prp_robot/camera/compressed";
     const std::string tag_detections = "/controller/tag_detections";
 
+    //Corridor Navigation
+    const std::string state = "/controller/state";
+    const std::string path = "/controller/valid_paths";
+
 };
 
 namespace Frame {

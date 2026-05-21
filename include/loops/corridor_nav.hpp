@@ -26,6 +26,20 @@
 using namespace std::chrono_literals;
 
 namespace loops {
+
+    constexpr float dt = 10e-3; //20ms between calls
+    constexpr float forward_speed_corridor = 0.23;
+    constexpr float exit_speed = 0.19;
+    //constexpr float forward_speed_corridor = 0.37;
+    constexpr float free_space = 0.43;
+    constexpr float intersection_threshold = 0.55;
+    constexpr float wall = 0.28;
+    //constexpr float wall = 0.30;
+    constexpr float centering_treshold = 0.20;
+    constexpr float intersection_advance_distance = 0.22; //Distance 15 cm + sensor to wheel base offset 7 cm
+    constexpr float intersection_exit_distance = 0.35; //Distance 15 cm + sensor to wheel base offset 7 cm
+    //constexpr float bias_gain = 5;
+
     enum class corridor_state {
         WAIT,
         CALIBRATION,
@@ -40,33 +54,38 @@ namespace loops {
 
     class CorridorNav : public rclcpp::Node {
 
+        //Published values
         algorithms::RobotSpeed cmd_vel_;
+
+        //Received sensor values
         algorithms::LidarFilterResults lidar_vals_;
         algorithms::LidarFilterResults intersection_vals_;
         float yaw_estimate_;
-        float set_yaw_;
-        bool exiting_corridor_;
-        bool turn_set_;
         uint8_t line_detection_;
-        algorithms::Coordinates act_coords_;
-
-        algorithms::ArucoID exit_;
-        algorithms::ArucoID treasure_;
-        
+        algorithms::Coordinates pose_;
         algorithms::Encoders encoders_;
         algorithms::Encoders last_encoders_;
-        float distance_traveled_at_intersection_;
-        corridor_state next_turn_direction_state_;
 
+        //State machine values
         corridor_state state_;
         corridor_state last_state_;
-        unsigned char reg_mode_;
-
+        float set_yaw_;
+        algorithms::ArucoID exit_;
+        algorithms::ArucoID treasure_;
+        bool heading_to_exit_;
+        rclcpp::Time last_time_;
+        bool first_run_;
+        std::array<bool, 3> valid_paths_;
+        rclcpp::Time turn_start_time_;
+        
+        //Algorithms
         algorithms::Kinematics kinematics_;
         algorithms::Pid pid_yaw_;
         algorithms::Pid pid_yaw_turn_;
         algorithms::Pid pid_centering_;
 
+
+        //ROS2 Topic publishers and subscribers
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_range_est_;
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr subscriber_intersection_range_;
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscriber_yaw_est_;
@@ -77,18 +96,22 @@ namespace loops {
 
 
         rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr publisher_cmd_vel_;
+        rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr publisher_state_;
+        rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_valid_paths_;
 
         rclcpp::TimerBase::SharedPtr publish_timer_;
+        rclcpp::TimerBase::SharedPtr publish_state_timer_;
         rclcpp::TimerBase::SharedPtr decision_timer_;
 
 
         rclcpp::Service<prp_project::srv::ButtonCmd>::SharedPtr button_cmd_service_;
-
         rclcpp::Client<prp_project::srv::CalibrateTrigger>::SharedPtr calibrate_client_;
         rclcpp::Client<prp_project::srv::ResetYawTrigger>::SharedPtr reset_yaw_client_;
 
 
         void publish_cmd_vel();
+
+        void publish_state();
 
         void range_est_callback(std_msgs::msg::Float32MultiArray::SharedPtr msg);
 
@@ -115,9 +138,11 @@ namespace loops {
 
         void send_reset_yaw();
 
-        void centering_setup();
-
         bool handle_direction(algorithms::ArucoID& code);
+
+        std::array<bool, 3> check_valid_paths();
+
+        float yaw_from_valid_path(const std::array<bool, 3> valid_paths);
 
     public:
 

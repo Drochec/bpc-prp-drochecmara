@@ -31,6 +31,28 @@ struct SensorNorm {
 
 using namespace std::chrono_literals;
 
+namespace algorithms {
+    float constexpr sensor_offset = 0.0145; //sirsi rozostup
+    //float constexpr sensor_offset = 0.0075; //pri sebe
+    float constexpr treshold = 0.25;     //treba normovat
+
+
+
+    class LineEstimator {
+        bool first_run_;
+        float smooth_left_;
+        float smooth_right_;
+
+        float alpha_;
+    public:
+
+        LineEstimator(float alpha = 0.2) : alpha_(alpha), first_run_(true) {};
+        DiscreteLinePose estimate_discrete_line_pose(const SensorNorm& sensor_vals);
+
+        float estimate_continuous_line_pose(const SensorNorm& sensor_vals);
+    };
+}
+
 namespace nodes {
     class LineNode : public rclcpp::Node {
         //TODO:
@@ -48,14 +70,16 @@ namespace nodes {
         SensorVals sensor_min_ = {25, 25};
         SensorNorm sensor_vals_;
 
+        algorithms::LineEstimator line_estimator_;
+
     public:
         LineNode();
         // Relative pose to line [m]
-        float get_continuous_line_pose() const;
+        float get_continuous_line_pose() ;
 
-        DiscreteLinePose get_discrete_line_pose() const;
+        DiscreteLinePose get_discrete_line_pose() ;
 
-        void publish_line_estimate() const;
+        void publish_line_estimate() ;
 
     private:
 
@@ -64,15 +88,3 @@ namespace nodes {
     };
 }
 
-namespace algorithms {
-    float constexpr sensor_offset = 0.0145; //sirsi rozostup
-    //float constexpr sensor_offset = 0.0075; //pri sebe
-    float constexpr treshold = 0.4;     //treba normovat
-
-    class LineEstimator {
-    public:
-        static DiscreteLinePose estimate_discrete_line_pose(const SensorNorm& sensor_vals);
-
-        static float estimate_continuous_line_pose(const SensorNorm& sensor_vals);
-    };
-}
