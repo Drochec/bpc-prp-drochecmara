@@ -9,7 +9,6 @@ Folder organization:
 - loops/ - Control loops 
 - nodes/ - ROS2 nodes for devices on the robot
 
-Projekt neobsahuje launch file, jak je běžné pro ROS2 projekty, všechny nody se spouští v main().
 The project doesn't contain a launch file as is standard in ROS2 projects, instead all nodes are launched in the main() function.
 
 Run the project using the command:
